@@ -28,8 +28,8 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 420,
-        "y": 340,
+        "x": 260,
+        "y": 200,
         "wires": [
             []
         ]
@@ -46,31 +46,8 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 420,
-        "y": 480,
+        "x": 380,
+        "y": 320,
         "wires": []
-    },
-    {
-        "id": "84c1d33a4835f53c",
-        "type": "link out",
-        "z": "09c5393cc94c2c31",
-        "name": "link out 1",
-        "mode": "link",
-        "links": [],
-        "x": 265,
-        "y": 400,
-        "wires": []
-    },
-    {
-        "id": "d3f2a7564b4eebef",
-        "type": "status",
-        "z": "09c5393cc94c2c31",
-        "name": "",
-        "scope": null,
-        "x": 200,
-        "y": 220,
-        "wires": [
-            []
-        ]
     }
 ]
