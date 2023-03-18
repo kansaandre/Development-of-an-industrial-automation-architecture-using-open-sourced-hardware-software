@@ -19,20 +19,7 @@
             {
                 "p": "topic",
                 "vt": "str"
-    },
-    {
-        "id": "e0d3553f4d179eed",
-        "type": "inject",
-        "z": "09c5393cc94c2c31",
-        "name": "",
-        "props": [
-            {
-                "p": "payload"
-            },
-            {
-                "p": "topic",
-                "vt": "str"
-    }
+            }
         ],
         "repeat": "",
         "crontab": "",
@@ -82,6 +69,33 @@
         "scope": null,
         "x": 200,
         "y": 220,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "3b9c8066e9a8a34d",
+        "type": "inject",
+        "z": "09c5393cc94c2c31",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 360,
+        "y": 80,
         "wires": [
             []
         ]

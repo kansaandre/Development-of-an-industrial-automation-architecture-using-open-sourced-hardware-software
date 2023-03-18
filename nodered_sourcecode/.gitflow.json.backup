@@ -19,7 +19,20 @@
             {
                 "p": "topic",
                 "vt": "str"
-            }
+    },
+    {
+        "id": "e0d3553f4d179eed",
+        "type": "inject",
+        "z": "09c5393cc94c2c31",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+    }
         ],
         "repeat": "",
         "crontab": "",
@@ -28,8 +41,8 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 260,
-        "y": 200,
+        "x": 420,
+        "y": 340,
         "wires": [
             []
         ]
@@ -46,8 +59,31 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 380,
-        "y": 320,
+        "x": 420,
+        "y": 480,
         "wires": []
+    },
+    {
+        "id": "84c1d33a4835f53c",
+        "type": "link out",
+        "z": "09c5393cc94c2c31",
+        "name": "link out 1",
+        "mode": "link",
+        "links": [],
+        "x": 265,
+        "y": 400,
+        "wires": []
+    },
+    {
+        "id": "d3f2a7564b4eebef",
+        "type": "status",
+        "z": "09c5393cc94c2c31",
+        "name": "",
+        "scope": null,
+        "x": 200,
+        "y": 220,
+        "wires": [
+            []
+        ]
     }
 ]
