@@ -1,0 +1,2 @@
+# Development-of-an-industrial-automation-architecture-using-open-sourced-hardware-software
+This open-source, community-driven project aims to develop an industrial automation architecture. Its vast resources, including source code, forums, and documentation, make it easier to integrate AI tools like ChatGPT, aiding coding, architecture design, and hardware selection. This sets it apart from confidential industrial vendors.
