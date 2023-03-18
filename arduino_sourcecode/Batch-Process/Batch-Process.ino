@@ -20,7 +20,7 @@ auto timer = timer_create_default();
 
 void setup() {
   Serial.begin(9600);
-  timer.every(100, processControlLogic, nullptr); // Pass nullptr as a second argument
+  timer.every(10000, processControlLogic, nullptr); // Pass nullptr as a second argument
 }
 
 void loop() {
@@ -62,8 +62,11 @@ void receiveData() {
 
 void sendData() {
   StaticJsonDocument<256> doc;
-
+  doc["start"] = start;
+  doc["stop1"] = stop1;
+  doc["stop2"] = stop2;
   doc["heater"] = heater;
+  doc["temp"] = temp;
   doc["stirrer"] = stirrer;
   doc["valve_a"] = valve_a;
   doc["valve_b"] = valve_b;
