@@ -19,7 +19,20 @@
             {
                 "p": "topic",
                 "vt": "str"
-            }
+    },
+    {
+        "id": "e0d3553f4d179eed",
+        "type": "inject",
+        "z": "09c5393cc94c2c31",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+    }
         ],
         "repeat": "",
         "crontab": "",
