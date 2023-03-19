@@ -2,5 +2,10 @@
     "name": "node-red-project",
     "description": "A Node-RED Project",
     "version": "0.0.1",
-    "private": true
+    "private": true,
+    "dependencies": {
+        "node-red-contrib-ui-led": "~0.4.11",
+        "node-red-dashboard": "~3.4.0",
+        "node-red-node-arduino": "~0.3.1"
+    }
 }
