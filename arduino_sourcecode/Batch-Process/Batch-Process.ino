@@ -1,3 +1,4 @@
+//23.03.2023 20:07
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -31,7 +32,7 @@
       
   void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset.
     //Timer setup
-      Timer1.initialize(1000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
+      Timer1.initialize(5000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
 
       Timer1.attachInterrupt(RWIO); // Attach the IO function to the interrupt
     //Serial communication setup
@@ -64,7 +65,8 @@
       // JSON
       String JSONSTRING; // Declare a JSON string to be able to commuicate JSON data out from the Control Layer to HMI Layer
       uint8_t LFFR_ReadFailCount = 0; // "Logic force & freeze readings" failure to read counter. At =3 JSONOBJ_LastValid is overwritten and freeze/forced values are replaced with raw sensor values.
-        boolean Flag_LogicForceFreezeReadings_Error = false; // Flag is set if Control Layer is unable to read in "Logic force & freeze readings" 
+      boolean Flag_LogicForceFreezeReadings_Error = false; // Flag is set if Control Layer is unable to read in "Logic force & freeze readings" 
+    
     // States (program variables)
       enum states { //Declare our states made direectly from Figure 9. in thesis document. 
         ready = 1,
@@ -77,7 +79,7 @@
       };
 //-------------------------------------------------------------------------------------------------------------------//
   //READ WRITE INPUT OUTPUT INTO JSON OBJECT + JSON SETUP // Functions used for RWIO (Interrupt loop)
-    StaticJsonDocument<300> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
+    StaticJsonDocument<500> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
     JsonObject JSONOBJ = JSONBUFFER.to<JsonObject>(); // Convert to JsonObject to store key-value pairs because it makes it easy to access and modify the individual values using the corresponding keys.
     JsonObject JSONOBJ_LastValid = JSONBUFFER.to<JsonObject>(); // Documentatation found in LogicForceFreezeReadings() function.
                          
@@ -103,18 +105,35 @@
       JSONOBJ["counter"] = counter;
       
     }
-
+    
     void SensorLogicDataWritings(){ //"Sensor & Logic data writing" Control Layer to HMI Layer, see figure 3 & 10 in thesis document (v.1)
       
       serializeJson(JSONBUFFER, JSONSTRING); // Function to convert data to JSON format string.
       Serial.println(JSONSTRING); // Print JSON string to serial monitor with Serial.println
     }
+    
     void LogicForceFreezeReadings() { //"Logic force & freeze readings" HMI Layer to Control Layer, see figure 3 & 10 in thesis document (v.1)
       DeserializationError error = deserializeJson(JSONBUFFER, JSONSTRING); // Error msg https://arduinojson.org/v6/api/misc/deserializationerror/
       
       if (error != DeserializationError::Ok){ 
         JSONOBJ["DebugReadLogicForceFreeze"] = error.c_str(); // Convert error to string, will be sent to HMI Layer in next interrupt call
         Flag_LogicForceFreezeReadings_Error = true; // Set a flag true = BAD read of Logic force & freeze reading (fig 10. thesis)
+        LFFR_ReadFailCount += 1; // Add one
+
+        start = JSONOBJ_LastValid["start"];
+        stop1 = JSONOBJ_LastValid["stop1"];
+        stop2 = JSONOBJ_LastValid["stop2"];
+        heater = JSONOBJ_LastValid["heater"];
+        stirrer = JSONOBJ_LastValid["stirrer"];
+        valveA = JSONOBJ_LastValid["valveA"];
+        valveB = JSONOBJ_LastValid["valveB"];
+        valveC = JSONOBJ_LastValid["valveC"];
+        s1 = JSONOBJ_LastValid["s1"];
+        s2 = JSONOBJ_LastValid["s2"];
+        s3 = JSONOBJ_LastValid["s3"];
+        temp = JSONOBJ_LastValid["temp"];
+        counter = JSONOBJ_LastValid["counter"]
+        ;
       }
       else {
         start = JSONOBJ["start"];
@@ -130,23 +149,26 @@
         s3 = JSONOBJ["s3"];
         temp = JSONOBJ["temp"];
         counter = JSONOBJ["counter"];
+        
         Flag_LogicForceFreezeReadings_Error = false; // set flag false = GOOD read of Logic force & freeze reading (fig 10. thesis)
-    
+        
+        LFFR_ReadFailCount = 0; // Reset error counter, we received good data from HMI.
+        
         JSONOBJ_LastValid = JSONOBJ;  // Here we store last valid HMI read in case of commuication error reading from HMI Layer "Logic force & freeze readings", see figure 10. 
-                                        // We will use this temporary storage of last valid read from the HMI Layer to keep values used in the "Control Process Logic Loop" frozen
-                                        // for MAXIMUM 3 interrupt function cycle calls. This will give the architecture time to be able to read "Logic force & freeze readings" correctly 
-                                        // and updating the values for the main program instead of insantly use Sensor values directly which effectively overwrite possible forced/freezed 
-                                        // values set by the operators which can trip the plant depending on what really is frozen and why. If after 3 interrupt function calls the values
-                                        // received is still not able to be read in by function LogicForceFreezeReadings() we will let the sensors overwrite the JSON Object letting values
-                                        // be used in the main control program and the Control Layer running the plant "blind" solely on Sensor input and Logic until HMI Layer commuication 
-                                        // can be achieved again. 
+                                      // We will use this temporary storage of last valid read from the HMI Layer to keep values used in the "Control Process Logic Loop" frozen
+                                      // for MAXIMUM 3 interrupt function cycle calls. This will give the architecture time to be able to read "Logic force & freeze readings" correctly 
+                                      // and updating the values for the main program instead of insantly use Sensor values directly which effectively overwrite possible forced/freezed 
+                                      // values set by the operators which can trip the plant depending on what really is frozen and why. If after 3 interrupt function calls the values
+                                      // received is still not able to be read in by function LogicForceFreezeReadings() we will let the sensors overwrite the JSON Object letting values
+                                      // be used in the main control program and the Control Layer running the plant "blind" solely on Sensor input and Logic until HMI Layer commuication 
+                                      // can be achieved again. 
 
       }
       JSONOBJ["Flag_LogicForceFreezeReadings_Error"] = Flag_LogicForceFreezeReadings_Error; // Add it to JSON, will be sent to HMI Layer in next interrupt function call.
+      JSONOBJ["LFFR_ReadFailCount"] = LFFR_ReadFailCount; // Add it to JSON, will be sent to HMI Layer in next interrupt function call.
       JSONOBJ_LastValid["Flag_LogicForceFreezeReadings_Error"] = Flag_LogicForceFreezeReadings_Error; //Copy
     }
       
-
   //Read/Write Time-Interrupt Loop
     void RWIO (){ 
       
