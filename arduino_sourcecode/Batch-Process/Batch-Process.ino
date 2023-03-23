@@ -1,4 +1,4 @@
-//23.03.2023 20:07
+//23.03.2023 20:17
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -79,9 +79,10 @@
       };
 //-------------------------------------------------------------------------------------------------------------------//
   //READ WRITE INPUT OUTPUT INTO JSON OBJECT + JSON SETUP // Functions used for RWIO (Interrupt loop)
-    StaticJsonDocument<500> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
-    JsonObject JSONOBJ = JSONBUFFER.to<JsonObject>(); // Convert to JsonObject to store key-value pairs because it makes it easy to access and modify the individual values using the corresponding keys.
-    JsonObject JSONOBJ_LastValid = JSONBUFFER.to<JsonObject>(); // Documentatation found in LogicForceFreezeReadings() function.
+    StaticJsonDocument<300> JSONBUFFER1; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
+    StaticJsonDocument<300> JSONBUFFER2;
+    JsonObject JSONOBJ = JSONBUFFER1.to<JsonObject>(); // Convert to JsonObject to store key-value pairs because it makes it easy to access and modify the individual values using the corresponding keys.
+    JsonObject JSONOBJ_LastValid = JSONBUFFER2.to<JsonObject>(); // Documentatation found in LogicForceFreezeReadings() function.
                          
     void SensorDataReadings(){ //"Sensor data readings" Process Layer to Control Layer, see figure 3 & 10 in thesis document.
       // start = digitalRead()
@@ -108,12 +109,12 @@
     
     void SensorLogicDataWritings(){ //"Sensor & Logic data writing" Control Layer to HMI Layer, see figure 3 & 10 in thesis document (v.1)
       
-      serializeJson(JSONBUFFER, JSONSTRING); // Function to convert data to JSON format string.
+      serializeJson(JSONBUFFER1, JSONSTRING); // Function to convert data to JSON format string.
       Serial.println(JSONSTRING); // Print JSON string to serial monitor with Serial.println
     }
     
     void LogicForceFreezeReadings() { //"Logic force & freeze readings" HMI Layer to Control Layer, see figure 3 & 10 in thesis document (v.1)
-      DeserializationError error = deserializeJson(JSONBUFFER, JSONSTRING); // Error msg https://arduinojson.org/v6/api/misc/deserializationerror/
+      DeserializationError error = deserializeJson(JSONBUFFER1, JSONSTRING); // Error msg https://arduinojson.org/v6/api/misc/deserializationerror/
       
       if (error != DeserializationError::Ok){ 
         JSONOBJ["DebugReadLogicForceFreeze"] = error.c_str(); // Convert error to string, will be sent to HMI Layer in next interrupt call
