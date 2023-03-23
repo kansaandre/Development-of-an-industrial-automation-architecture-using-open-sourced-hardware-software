@@ -29,10 +29,10 @@
       //If you're working with a different microcontroller, you may need to find a library that's compatible with your specific hardware or use the built-in timer functionalities of that microcontroller.
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       
-
   void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset.
     //Timer setup
-      Timer1.initialize(1000000); // Set interrupt interval function call to 1 second (1000000 microseconds) 
+      Timer1.initialize(1000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
+
       Timer1.attachInterrupt(RWIO); // Attach the IO function to the interrupt
     //Serial communication setup
       Serial.begin(9600);
@@ -79,17 +79,8 @@
   //READ WRITE INPUT OUTPUT INTO JSON OBJECT + JSON SETUP // Functions used for RWIO (Interrupt loop)
     StaticJsonDocument<300> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
     JsonObject JSONOBJ = JSONBUFFER.to<JsonObject>(); // Convert to JsonObject to store key-value pairs because it makes it easy to access and modify the individual values using the corresponding keys.
-    
-    JsonObject JSONOBJ_LastValid = JSOBOBJ(); // Here we store last valid HMI read in case of commuication error reading from HMI Layer "Logic force & freeze readings", see figure 10. 
-                                              // We will use this temporary storage of last valid read from the HMI Layer to keep values used in the "Control Process Logic Loop" frozen
-                                              // for MAXIMUM 3 interrupt function cycle calls. This will give the architecture time to be able to read "Logic force & freeze readings" correctly 
-                                              // and updating the values for the main program instead of insantly use Sensor values directly which effectively overwrite possible forced/freezed 
-                                              // values set by the operators which can trip the plant depending on what really is frozen and why. If after 3 interrupt function calls the values
-                                              // received is still not able to be read in by function LogicForceFreezeReadings() we will let the sensors overwrite the JSON Object letting values
-                                              // be used in the main control program and the Control Layer running the plant "blind" solely on Sensor input and Logic until HMI Layer commuication 
-                                              // can be achieved again. 
-                                              
-
+    JsonObject JSONOBJ_LastValid = JSONBUFFER.to<JsonObject>(); // Documentatation found in LogicForceFreezeReadings() function.
+                         
     void SensorDataReadings(){ //"Sensor data readings" Process Layer to Control Layer, see figure 3 & 10 in thesis document.
       // start = digitalRead()
       // stop1 = digitalRead()
@@ -117,9 +108,9 @@
       
       serializeJson(JSONBUFFER, JSONSTRING); // Function to convert data to JSON format string.
       Serial.println(JSONSTRING); // Print JSON string to serial monitor with Serial.println
-
+    }
     void LogicForceFreezeReadings() { //"Logic force & freeze readings" HMI Layer to Control Layer, see figure 3 & 10 in thesis document (v.1)
-      DeserializationError error = deserializeJson(doc, json); // Error msg https://arduinojson.org/v6/api/misc/deserializationerror/
+      DeserializationError error = deserializeJson(JSONBUFFER, JSONSTRING); // Error msg https://arduinojson.org/v6/api/misc/deserializationerror/
       
       if (error != DeserializationError::Ok){ 
         JSONOBJ["DebugReadLogicForceFreeze"] = error.c_str(); // Convert error to string, will be sent to HMI Layer in next interrupt call
@@ -140,12 +131,21 @@
         temp = JSONOBJ["temp"];
         counter = JSONOBJ["counter"];
         Flag_LogicForceFreezeReadings_Error = false; // set flag false = GOOD read of Logic force & freeze reading (fig 10. thesis)
+    
+        JSONOBJ_LastValid = JSONOBJ;  // Here we store last valid HMI read in case of commuication error reading from HMI Layer "Logic force & freeze readings", see figure 10. 
+                                        // We will use this temporary storage of last valid read from the HMI Layer to keep values used in the "Control Process Logic Loop" frozen
+                                        // for MAXIMUM 3 interrupt function cycle calls. This will give the architecture time to be able to read "Logic force & freeze readings" correctly 
+                                        // and updating the values for the main program instead of insantly use Sensor values directly which effectively overwrite possible forced/freezed 
+                                        // values set by the operators which can trip the plant depending on what really is frozen and why. If after 3 interrupt function calls the values
+                                        // received is still not able to be read in by function LogicForceFreezeReadings() we will let the sensors overwrite the JSON Object letting values
+                                        // be used in the main control program and the Control Layer running the plant "blind" solely on Sensor input and Logic until HMI Layer commuication 
+                                        // can be achieved again. 
 
-        
       }
       JSONOBJ["Flag_LogicForceFreezeReadings_Error"] = Flag_LogicForceFreezeReadings_Error; // Add it to JSON, will be sent to HMI Layer in next interrupt function call.
+      JSONOBJ_LastValid["Flag_LogicForceFreezeReadings_Error"] = Flag_LogicForceFreezeReadings_Error; //Copy
     }
-      }
+      
 
   //Read/Write Time-Interrupt Loop
     void RWIO (){ 
@@ -160,7 +160,6 @@
       
     }
 
-      print(JSONOBJ.start);
 
   //Control Process Logic Loop (see Figure 10. in thesis document)
   
@@ -226,11 +225,4 @@
        }
     }
 
-           
-       
-        
-      
-      
-      
-    
-        
+          
