@@ -110,6 +110,7 @@
     void SensorLogicDataWritings(){ //"Sensor & Logic data writing" Control Layer to HMI Layer, see figure 3 & 10 in thesis document (v.1)
       
       serializeJson(JSONBUFFER1, JSONSTRING); // Function to convert data to JSON format string.
+      JSONBUFFER1.clear(); // clear buffer
       Serial.println(JSONSTRING); // Print JSON string to serial monitor with Serial.println
     }
     
