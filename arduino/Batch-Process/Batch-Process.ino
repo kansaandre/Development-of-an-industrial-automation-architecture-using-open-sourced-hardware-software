@@ -1,4 +1,4 @@
-//LAST UPDATE: 25.03.2023 17:00
+//LAST UPDATE: 25.03.2023 22:45
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -16,9 +16,9 @@
     //such as the ATmega328P found in the Arduino Uno. Here's an overview of the TimerOne library and its key features:
       //Hardware usage: The library utilizes Timer1, a 16-bit hardware timer present in many AVR microcontrollers. 
         //Timer1 is one of the most versatile timers in these microcontrollers, offering a wide range of functionality 
-        //and high-resolution timing.
-      //PWM generation: TimerOne allows you to generate PWM signals with configurable frequency and duty cycle on specific pins, 
-        //typically pin 9 and pin 10 on the Arduino Uno.
+        //and high-resolution timing. 
+      //Precision: Hardware timers are more precise and have better resolution than software timers. They are based on the microcontroller's internal hardware clock, 
+        //so their accuracy is not affected by other processes or code execution.
       //Interrupt handling: The library enables you to attach and detach interrupt service routines (ISR) to the timer overflow event. 
         //This means you can execute specific functions at defined time intervals, which is useful for tasks like periodic data sampling or time-based control.
       //Timer configuration: TimerOne provides functions to configure the timer's prescaler, allowing you to adjust the timer's resolution and range. 
@@ -77,6 +77,9 @@
         drain1 = 6,
         drain2 = 7
       };
+
+        states state = ready; // Default/inital state   
+
 //-------------------------------------------------------------------------------------------------------------------//
   //READ WRITE INPUT OUTPUT INTO JSON OBJECT + JSON SETUP // Functions used for ReadWriteInOutInterrupt (Interrupt loop)
     StaticJsonDocument<300> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
@@ -104,6 +107,7 @@
       JSONOBJ["counter"] = counter;
       JSONOBJ["Flag_LogicForceFreezeReadings_Error"] = Flag_LogicForceFreezeReadings_Error;  
       JSONOBJ["LFFR_ReadFailCount"] = LFFR_ReadFailCount; 
+      JSONOBJ["CurrentState"] = state; 
     }
     
     void SensorLogicDataWritings(){ //"Sensor & Logic data writing" Control Layer to HMI Layer, see figure 3 & 10 in thesis document (v.1)
@@ -173,22 +177,20 @@
   //Read/Write Time-Interrupt Loop
     void ReadWriteInOutInterrupt (){ 
       
-      SensorDataReadings(); 
+      SensorDataReadings(); // Read in "Sensor data readings" from Process Layer to Control Layer (see figure 10. in thesis document)
        
-      JsonObjPropertyAdd();        
+      JsonObjPropertyAdd(); // "JSON" (see figure 10.) - add properties to the JSON objects which is used to store the global variables.         
 
-      SensorLogicDataWritings(); 
+      SensorLogicDataWritings(); // Write out "Sensor & Logic data writings" from the Control Layer to the HMI Layer. Enable data to be accessible to operators/engineers.
 
-      LogicForceFreezeReadings();
+      LogicForceFreezeReadings(); // Read in "Logic force &
       
     }
 
 
   //Control Process Logic Loop (see Figure 10. in thesis document)
-  
-    states state = ready; // Default/inital state   
-  
-    void loop(){
+   
+    void loop(){ //Main loop for executing process logic sequence
 
       switch (state) {
         
@@ -247,5 +249,7 @@
           }
        }
     }
+
+    
 
           
