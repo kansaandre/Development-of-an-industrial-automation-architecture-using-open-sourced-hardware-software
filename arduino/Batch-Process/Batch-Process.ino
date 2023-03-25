@@ -107,7 +107,8 @@
       JSONOBJ["counter"] = counter;
       JSONOBJ["Flag_LogicForceFreezeReadings_Error"] = Flag_LogicForceFreezeReadings_Error;  
       JSONOBJ["LFFR_ReadFailCount"] = LFFR_ReadFailCount; 
-      JSONOBJ["CurrentState"] = state; 
+      JSONOBJ["CurrentState"] = state;
+      JSONOBJ["DebugReadLogicForceFreeze"] = "first call";  
     }
     
     void SensorLogicDataWritings(){ //"Sensor & Logic data writing" Control Layer to HMI Layer, see figure 3 & 10 in thesis document (v.1)
@@ -119,7 +120,8 @@
     void LogicForceFreezeReadings() { //"Logic force & freeze readings" HMI Layer to Control Layer, see figure 3 & 10 in thesis document (v.1)
       
       DeserializationError error = deserializeJson(JSONBUFFER, JSONSTRING); // Error msg https://arduinojson.org/v6/api/misc/deserializationerror/ . Note, function clear JSONBUFFER data.
-      
+      JSONOBJ["DebugReadLogicForceFreeze"] = error.c_str(); // Convert error text to string, will be sent to HMI Layer in next interrupt call.
+
       if ((error != DeserializationError::Ok) and (LFFR_ReadFailCount < 3)) {
         Flag_LogicForceFreezeReadings_Error = true; // Set a flag true = BAD read of Logic force & freeze reading (fig 10. thesis)
         LFFR_ReadFailCount = LFFR_ReadFailCount + 1; // Increment of readfailure of "Logic force & freeze reading" (fig 10. thesis) from HMI Layer. At =3 HMI freeze/force data will be dropped and replaced by raw sensor data.
@@ -171,7 +173,6 @@
       }
       
       JSONOBJ_LastValid["Flag_LogicForceFreezeReadings_Error"] = Flag_LogicForceFreezeReadings_Error; //Copy
-      JSONOBJ["DebugReadLogicForceFreeze"] = error.c_str(); // Convert error text to string, will be sent to HMI Layer in next interrupt call
     }
       
   //Read/Write Time-Interrupt Loop
@@ -183,7 +184,8 @@
 
       SensorLogicDataWritings(); // Write out "Sensor & Logic data writings" from the Control Layer to the HMI Layer. Enable data to be accessible to operators/engineers.
 
-      LogicForceFreezeReadings(); // Read in "Logic force &
+      LogicForceFreezeReadings(); // Read in "Logic force & freeze readings@ from the HMI Layer to the Control Layer. Modified data from operators/engineers (freeze & force).
+      
       
     }
 
