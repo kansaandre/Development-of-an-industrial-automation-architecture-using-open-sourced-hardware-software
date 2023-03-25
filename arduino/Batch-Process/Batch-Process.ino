@@ -1,4 +1,4 @@
-//LAST UPDATE: 25.03.2023 22:45
+//LAST UPDATE: 26.03.2023 00:15
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -82,9 +82,10 @@
 
 //-------------------------------------------------------------------------------------------------------------------//
   //READ WRITE INPUT OUTPUT INTO JSON OBJECT + JSON SETUP // Functions used for ReadWriteInOutInterrupt (Interrupt loop)
-    StaticJsonDocument<300> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
+    StaticJsonDocument<400> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
     JsonObject JSONOBJ = JSONBUFFER.to<JsonObject>(); // Convert to JsonObject to store key-value pairs because it makes it easy to access and modify the individual values using the corresponding keys.
     JsonObject JSONOBJ_LastValid; // Use to temporary store HMI Layer data "Logic force & freeze readings", fig 10 thesis. Used in case of commuication error.                    
+  
     void SensorDataReadings(){ //"Sensor data readings" Process Layer to Control Layer, see figure 3 & 10 in thesis document.
       // start = digitalRead()
       // stop1 = digitalRead()
@@ -107,12 +108,13 @@
       JSONOBJ["counter"] = counter;
       JSONOBJ["Flag_LogicForceFreezeReadings_Error"] = Flag_LogicForceFreezeReadings_Error;  
       JSONOBJ["LFFR_ReadFailCount"] = LFFR_ReadFailCount; 
-      JSONOBJ["CurrentState"] = state;
-      JSONOBJ["DebugReadLogicForceFreeze"] = "first call";  
+      JSONOBJ["CurrentState"] = state; 
     }
     
     void SensorLogicDataWritings(){ //"Sensor & Logic data writing" Control Layer to HMI Layer, see figure 3 & 10 in thesis document (v.1)
-      JSONSTRING = ""; // Clear the JSONSTRING variable
+      if (JSONSTRING.length() > 0) {
+        JSONSTRING = ""; // Clear the JSONSTRING variable
+      }
       serializeJsonPretty(JSONBUFFER, JSONSTRING); // Function to convert data to JSON format string.
       Serial.println(JSONSTRING); // Print JSON string to serial monitor with Serial.println
     }
@@ -120,7 +122,7 @@
     void LogicForceFreezeReadings() { //"Logic force & freeze readings" HMI Layer to Control Layer, see figure 3 & 10 in thesis document (v.1)
       
       DeserializationError error = deserializeJson(JSONBUFFER, JSONSTRING); // Error msg https://arduinojson.org/v6/api/misc/deserializationerror/ . Note, function clear JSONBUFFER data.
-      JSONOBJ["DebugReadLogicForceFreeze"] = error.c_str(); // Convert error text to string, will be sent to HMI Layer in next interrupt call.
+        JSONOBJ["DebugReadLogicForceFreeze"] = error.c_str(); // Convert error text to string, will be sent to HMI Layer in next interrupt call.
 
       if ((error != DeserializationError::Ok) and (LFFR_ReadFailCount < 3)) {
         Flag_LogicForceFreezeReadings_Error = true; // Set a flag true = BAD read of Logic force & freeze reading (fig 10. thesis)
@@ -171,8 +173,6 @@
                                           // can be achieved again. 
         }
       }
-      
-      JSONOBJ_LastValid["Flag_LogicForceFreezeReadings_Error"] = Flag_LogicForceFreezeReadings_Error; //Copy
     }
       
   //Read/Write Time-Interrupt Loop
