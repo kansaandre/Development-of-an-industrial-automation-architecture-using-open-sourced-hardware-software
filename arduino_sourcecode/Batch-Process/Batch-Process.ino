@@ -104,10 +104,10 @@
       JSONOBJ["counter"] = counter;
       JSONOBJ["Flag_LogicForceFreezeReadings_Error"] = Flag_LogicForceFreezeReadings_Error;  
       JSONOBJ["LFFR_ReadFailCount"] = LFFR_ReadFailCount; 
-      
     }
     
     void SensorLogicDataWritings(){ //"Sensor & Logic data writing" Control Layer to HMI Layer, see figure 3 & 10 in thesis document (v.1)
+      JSONSTRING = ""; // Clear the JSONSTRING variable
       serializeJsonPretty(JSONBUFFER, JSONSTRING); // Function to convert data to JSON format string.
       Serial.println(JSONSTRING); // Print JSON string to serial monitor with Serial.println
     }
