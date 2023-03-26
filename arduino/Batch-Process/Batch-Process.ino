@@ -33,7 +33,7 @@
   void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset.
     //Timer setup
       Timer1.initialize(10000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
-      Timer1.attachInterrupt(ReadWriteInOutInterrupt); // Attach the IO function to the interrupt
+      Timer1.attachInterrupt(ReadWriteInOutInterrupt); // Attach the ReadWriteInOutInterrupt() function to the interrupt
     //Serial communication setup
       Serial.begin(9600);
   }
