@@ -1,4 +1,4 @@
-//LAST UPDATE: 26.03.2023 00:15
+//LAST UPDATE: 26.03.2023 01:08
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -32,7 +32,7 @@
       
   void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset.
     //Timer setup
-      Timer1.initialize(5000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
+      Timer1.initialize(10000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
       Timer1.attachInterrupt(ReadWriteInOutInterrupt); // Attach the IO function to the interrupt
     //Serial communication setup
       Serial.begin(9600);
@@ -78,7 +78,7 @@
         drain2 = 7
       };
 
-        states state = ready; // Default/inital state   
+      states state = ready; // Default/inital state   
 
 //-------------------------------------------------------------------------------------------------------------------//
   //READ WRITE INPUT OUTPUT INTO JSON OBJECT + JSON SETUP // Functions used for ReadWriteInOutInterrupt (Interrupt loop)
@@ -92,7 +92,7 @@
       //Etc. etc. Example how to read data from input ports when real sensors are connected to controller
     }
 
-    void JsonObjPropertyAdd(){ // Add our globaal variables to the JSON document/buffer
+    void JsonObjPropertyAdd(){ // Add our global variables to the JSON document/buffer "JSON" in figure 10. Convert data to JSON.
       JSONOBJ["start"] = start; 
       JSONOBJ["stop1"] = stop1;
       JSONOBJ["stop2"] = stop2;
@@ -122,7 +122,7 @@
     void LogicForceFreezeReadings() { //"Logic force & freeze readings" HMI Layer to Control Layer, see figure 3 & 10 in thesis document (v.1)
       
       DeserializationError error = deserializeJson(JSONBUFFER, JSONSTRING); // Error msg https://arduinojson.org/v6/api/misc/deserializationerror/ . Note, function clear JSONBUFFER data.
-        JSONOBJ["DebugReadLogicForceFreeze"] = error.c_str(); // Convert error text to string, will be sent to HMI Layer in next interrupt call.
+        JSONOBJ["DebugReadLogicForceFreeze"] = error.c_str(); // Convert error text to string, will be sent to HMI Layer in next interrupt call. Documentation in hyperlink found in line above. 
 
       if ((error != DeserializationError::Ok) and (LFFR_ReadFailCount < 3)) {
         Flag_LogicForceFreezeReadings_Error = true; // Set a flag true = BAD read of Logic force & freeze reading (fig 10. thesis)
@@ -143,7 +143,8 @@
         counter = JSONOBJ_LastValid["counter"]
         ;
       }
-      else if ((error == DeserializationError::Ok) or (LFFR_ReadFailCount >= 3)){
+      
+      else if ((error == DeserializationError::Ok) or (LFFR_ReadFailCount >= 3)){ // Read comment about this else if in "JSONOBJ_LastValid.set(JSONOBJ);" line.
         start = JSONOBJ["start"];
         stop1 = JSONOBJ["stop1"];
         stop2 = JSONOBJ["stop2"];
@@ -174,6 +175,14 @@
         }
       }
     }
+
+    void ActuatorWritings(){ // Write out "Actuator writings" from Control Layer to the Process Layer. See figure 10. 
+      
+      // As of now we have not hooked up any physical actuators to our Control Layer therefore this remain empty.
+      // For this sketch as it is now we can still see actuator signals which is sent to HMI Layer with JSON. There
+      // the signals are displayed with plots and graphical interfaces.  
+      
+    }
       
   //Read/Write Time-Interrupt Loop
     void ReadWriteInOutInterrupt (){ 
@@ -185,10 +194,10 @@
       SensorLogicDataWritings(); // Write out "Sensor & Logic data writings" from the Control Layer to the HMI Layer. Enable data to be accessible to operators/engineers.
 
       LogicForceFreezeReadings(); // Read in "Logic force & freeze readings@ from the HMI Layer to the Control Layer. Modified data from operators/engineers (freeze & force).
-      
+
+      ActuatorWritings(); // Write out "Actuator writings" from Control Layer to the Process Layer. See figure 10. 
       
     }
-
 
   //Control Process Logic Loop (see Figure 10. in thesis document)
    
