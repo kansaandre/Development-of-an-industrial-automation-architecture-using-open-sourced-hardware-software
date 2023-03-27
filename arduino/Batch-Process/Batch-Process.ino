@@ -1,4 +1,4 @@
-//LAST UPDATE: 26.03.2023 01:08
+//LAST UPDATE: 27.03.2023 00:45
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -32,7 +32,7 @@
       
   void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset.
     //Timer setup
-      Timer1.initialize(10000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
+      Timer1.initialize(5000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
       Timer1.attachInterrupt(ReadWriteInOutInterrupt); // Attach the ReadWriteInOutInterrupt() function to the interrupt
     //Serial communication setup
       Serial.begin(9600);
@@ -75,6 +75,7 @@
         heating = 4,
         wait = 5,
         drain1 = 6,
+        
         drain2 = 7
       };
 
@@ -115,7 +116,8 @@
       if (JSONSTRING.length() > 0) {
         JSONSTRING = ""; // Clear the JSONSTRING variable
       }
-      serializeJsonPretty(JSONBUFFER, JSONSTRING); // Function to convert data to JSON format string.
+      serializeJson
+      (JSONBUFFER, JSONSTRING); // Function to convert data to JSON format string.
       Serial.println(JSONSTRING); // Print JSON string to serial monitor with Serial.println
     }
     

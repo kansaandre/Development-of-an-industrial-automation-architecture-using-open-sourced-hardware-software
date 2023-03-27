@@ -1,0 +1,10 @@
+{
+    "name": "node-red-project",
+    "description": "A Node-RED Project",
+    "version": "0.0.1",
+    "private": true,
+    "dependencies": {
+        "node-red-dashboard": "~3.4.0",
+        "node-red-node-serialport": "~1.0.3"
+    }
+}
