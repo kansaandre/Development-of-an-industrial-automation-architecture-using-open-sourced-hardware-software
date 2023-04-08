@@ -434,7 +434,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-node-serialport",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-node-serialport/25-serial.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-node-serialport/25-serial.js"
             }
         }
     },
@@ -453,7 +453,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_base.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_base.js"
             },
             "ui_button": {
                 "name": "ui_button",
@@ -464,7 +464,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_button.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_button.js"
             },
             "ui_dropdown": {
                 "name": "ui_dropdown",
@@ -475,7 +475,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_dropdown.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_dropdown.js"
             },
             "ui_switch": {
                 "name": "ui_switch",
@@ -486,7 +486,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_switch.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_switch.js"
             },
             "ui_slider": {
                 "name": "ui_slider",
@@ -497,7 +497,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_slider.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_slider.js"
             },
             "ui_numeric": {
                 "name": "ui_numeric",
@@ -508,7 +508,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_numeric.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_numeric.js"
             },
             "ui_text_input": {
                 "name": "ui_text_input",
@@ -519,7 +519,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_text_input.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_text_input.js"
             },
             "ui_date_picker": {
                 "name": "ui_date_picker",
@@ -530,7 +530,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_date_picker.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_date_picker.js"
             },
             "ui_colour_picker": {
                 "name": "ui_colour_picker",
@@ -541,7 +541,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_colour_picker.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_colour_picker.js"
             },
             "ui_form": {
                 "name": "ui_form",
@@ -552,7 +552,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_form.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_form.js"
             },
             "ui_text": {
                 "name": "ui_text",
@@ -563,7 +563,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_text.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_text.js"
             },
             "ui_gauge": {
                 "name": "ui_gauge",
@@ -574,7 +574,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_gauge.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_gauge.js"
             },
             "ui_chart": {
                 "name": "ui_chart",
@@ -585,7 +585,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_chart.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_chart.js"
             },
             "ui_audio": {
                 "name": "ui_audio",
@@ -596,7 +596,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_audio.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_audio.js"
             },
             "ui_toast": {
                 "name": "ui_toast",
@@ -607,7 +607,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_toast.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_toast.js"
             },
             "ui_ui_control": {
                 "name": "ui_ui_control",
@@ -618,7 +618,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_ui_control.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_ui_control.js"
             },
             "ui_template": {
                 "name": "ui_template",
@@ -629,7 +629,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_template.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_template.js"
             },
             "ui_link": {
                 "name": "ui_link",
@@ -640,7 +640,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_link.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_link.js"
             },
             "ui_tab": {
                 "name": "ui_tab",
@@ -651,7 +651,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_tab.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_tab.js"
             },
             "ui_group": {
                 "name": "ui_group",
@@ -662,7 +662,7 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_group.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_group.js"
             },
             "ui_spacer": {
                 "name": "ui_spacer",
@@ -673,7 +673,81 @@
                 "local": true,
                 "user": false,
                 "module": "node-red-dashboard",
-                "file": "/home/kansa/Desktop/Bachelor/Batch-Process/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_spacer.js"
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_spacer.js"
+            }
+        }
+    },
+    "node-red-contrib-uibuilder": {
+        "name": "node-red-contrib-uibuilder",
+        "version": "6.3.0",
+        "local": true,
+        "user": true,
+        "nodes": {
+            "uibuilder": {
+                "name": "uibuilder",
+                "types": [
+                    "uibuilder"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-uibuilder",
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-contrib-uibuilder/nodes/uibuilder.js"
+            },
+            "uib-cache": {
+                "name": "uib-cache",
+                "types": [
+                    "uib-cache"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-uibuilder",
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-contrib-uibuilder/nodes/uib-cache.js"
+            },
+            "uib-element": {
+                "name": "uib-element",
+                "types": [
+                    "uib-element"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-uibuilder",
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-contrib-uibuilder/nodes/uib-element/customNode.js"
+            },
+            "uib-update": {
+                "name": "uib-update",
+                "types": [
+                    "uib-update"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-uibuilder",
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-contrib-uibuilder/nodes/uib-update/customNode.js"
+            },
+            "uib-sender": {
+                "name": "uib-sender",
+                "types": [
+                    "uib-sender"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-uibuilder",
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-contrib-uibuilder/nodes/uib-sender.js"
+            },
+            "uib-list": {
+                "name": "uib-list",
+                "types": [
+                    "uib-list"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-uibuilder",
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-contrib-uibuilder/nodes/uib-list/customNode.js"
             }
         }
     }

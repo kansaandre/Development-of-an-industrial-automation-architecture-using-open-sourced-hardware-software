@@ -17,10 +17,12 @@
             }
         },
         "debug": {
-            "filter": "filterAll",
+            "filter": "filterSelected",
             "filteredNodes": [
-                "0adceff2ee7a8a38"
+                "0adceff2ee7a8a38",
+                "d559c9bf4d8f3f8b"
             ]
-        }
+        },
+        "menu-menu-item-sidebar": true
     }
 }

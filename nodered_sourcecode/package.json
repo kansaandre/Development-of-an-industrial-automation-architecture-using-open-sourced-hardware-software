@@ -4,6 +4,7 @@
     "version": "0.0.1",
     "private": true,
     "dependencies": {
+        "node-red-contrib-uibuilder": "~6.3.0",
         "node-red-dashboard": "~3.4.0",
         "node-red-node-serialport": "~1.0.3"
     }
