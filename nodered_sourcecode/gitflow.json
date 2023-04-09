@@ -174,8 +174,8 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 380,
-        "y": 160,
+        "x": 360,
+        "y": 220,
         "wires": []
     },
     {
@@ -184,8 +184,8 @@
         "z": "5876467d554e446b",
         "name": "",
         "serial": "3c689f194f494e02",
-        "x": 190,
-        "y": 160,
+        "x": 170,
+        "y": 280,
         "wires": [
             [
                 "0adceff2ee7a8a38",
@@ -205,27 +205,9 @@
         "y": 280,
         "wires": [
             [
-                "d559c9bf4d8f3f8b",
-                "ea82ece1189f470e"
+                "795365759708c8fd"
             ]
         ]
-    },
-    {
-        "id": "d559c9bf4d8f3f8b",
-        "type": "debug",
-        "z": "5876467d554e446b",
-        "name": "debug 2",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 520,
-        "y": 280,
-        "wires": []
     },
     {
         "id": "ea82ece1189f470e",
@@ -242,12 +224,11 @@
         "resendOnRefresh": true,
         "templateScope": "local",
         "className": "",
-        "x": 560,
-        "y": 420,
+        "x": 320,
+        "y": 340,
         "wires": [
             [
-                "a2a0b50b49465540",
-                "bdf913ab472151cf"
+                "05302a26a7d9a89d"
             ]
         ]
     },
@@ -265,9 +246,7 @@
         "x": 360,
         "y": 420,
         "wires": [
-            [
-                "ea82ece1189f470e"
-            ]
+            []
         ]
     },
     {
@@ -296,30 +275,13 @@
         ]
     },
     {
-        "id": "a2a0b50b49465540",
-        "type": "debug",
-        "z": "5876467d554e446b",
-        "name": "debug 4",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 880,
-        "y": 420,
-        "wires": []
-    },
-    {
         "id": "c42044015f318f19",
         "type": "serial out",
         "z": "5876467d554e446b",
         "name": "",
         "serial": "3c689f194f494e02",
-        "x": 890,
-        "y": 460,
+        "x": 1770,
+        "y": 280,
         "wires": []
     },
     {
@@ -330,12 +292,251 @@
         "property": "payload",
         "action": "",
         "pretty": false,
-        "x": 730,
-        "y": 460,
+        "x": 1570,
+        "y": 280,
         "wires": [
             [
-                "c42044015f318f19"
+                "c42044015f318f19",
+                "33c9b9eb0238d85f"
             ]
         ]
+    },
+    {
+        "id": "6268211513e467dc",
+        "type": "function",
+        "z": "5876467d554e446b",
+        "name": "control_layer",
+        "func": "msg.payload = {\n    \"start\": false,\n    \"stop1\": false,\n    \"stop2\": true,\n    \"heater\": true,\n    \"stirrer\": true,\n    \"valveA\": false,\n    \"valveB\": false,\n    \"valveC\": false,\n    \"s1\": false,\n    \"s2\": false,\n    \"s3\": false,\n    \"temp\": 50,\n    \"counter\": null,\n    \"CurrentState\": null,\n    \"overridemode\": true,\n    \"Flag_LogicForceFreezeReadings_Error\": false,\n    \"LFFR_ReadFailCount\": 0,\n    \"DebugReadLogicForceFreeze\": \"Ok\"\n\n};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 430,
+        "y": 500,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "dfc34c6df10bd3dc",
+        "type": "function",
+        "z": "5876467d554e446b",
+        "name": "override",
+        "func": "msg.payload = {\n    \"start\": false,\n    \"stop1\": false,\n    \"stop2\": true,\n    \"heater\": null,\n    \"stirrer\": null,\n    \"valveA\": null,\n    \"valveB\": null,\n    \"valveC\": null,\n    \"s1\": null,\n    \"s2\": null,\n    \"s3\": null,\n    \"temp\": 20,\n    \"counter\": null,\n    \"CurrentState\": null,\n    \"overridemode\": true,\n    \"Flag_LogicForceFreezeReadings_Error\": false,\n    \"LFFR_ReadFailCount\": 0,\n    \"DebugReadLogicForceFreeze\": \"Ok\"\n\n};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 420,
+        "y": 580,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "9ab4c027559a05c0",
+        "type": "join",
+        "z": "5876467d554e446b",
+        "name": "",
+        "mode": "custom",
+        "build": "object",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": true,
+        "timeout": "",
+        "count": "2",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 1090,
+        "y": 280,
+        "wires": [
+            [
+                "3c4501b8f56f92a5",
+                "8d1c68a33ab4d1d4"
+            ]
+        ]
+    },
+    {
+        "id": "d4ef38ddd3edaadd",
+        "type": "inject",
+        "z": "5876467d554e446b",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "str",
+        "x": 210,
+        "y": 500,
+        "wires": [
+            [
+                "6268211513e467dc"
+            ]
+        ]
+    },
+    {
+        "id": "2ec6324053958050",
+        "type": "inject",
+        "z": "5876467d554e446b",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "str",
+        "x": 210,
+        "y": 580,
+        "wires": [
+            [
+                "dfc34c6df10bd3dc"
+            ]
+        ]
+    },
+    {
+        "id": "795365759708c8fd",
+        "type": "change",
+        "z": "5876467d554e446b",
+        "name": "Identify flow as incoming from control layer",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "SensorLogicDataWritings",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 610,
+        "y": 280,
+        "wires": [
+            [
+                "9ab4c027559a05c0"
+            ]
+        ]
+    },
+    {
+        "id": "05302a26a7d9a89d",
+        "type": "change",
+        "z": "5876467d554e446b",
+        "name": "Identify flow as flow coming from override in UI",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "overridesinHMI",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 620,
+        "y": 340,
+        "wires": [
+            [
+                "9ab4c027559a05c0"
+            ]
+        ]
+    },
+    {
+        "id": "3c4501b8f56f92a5",
+        "type": "function",
+        "z": "5876467d554e446b",
+        "name": "merging of flows",
+        "func": "const control_layer = msg.payload.SensorLogicDataWritings;\nconst override = msg.payload.overridesinHMI;\n\n// Merge the two payloads, prioritizing non-null values in override_layer\nconst mergedPayload = {};\n\nfor (const key in control_layer) {\n    mergedPayload[key] = override[key] !== null ? override[key] : control_layer[key];\n}\n\nmsg.payload = mergedPayload;\nmsg.topic = \"LogicForceFreezeReadings\"\nreturn msg;\n\n\n//The given code merges two input payloads, control_layer and override, by creating a new object, mergedPayload. \n//It copies all the properties from the control_layer object and overwrites any non-null properties with the \n//corresponding values from the override object. The code uses a for...in loop to iterate over all properties \n//of the control_layer object and checks if the corresponding property in the override object is non-null. \n//If it is, the value from the override object is used, otherwise, the value from the control_layer object is used. \n//The modified mergedPayload object is returned as the output. This will prioritize any overrides operators/engineers \n//do in the UI/HMI over the controllayer suggestion. See figure 10 of thesis document v1.0 where our flow from control\n//layer \"Sensor & Logic data writings\" gets replaced with overrides performed by HMI Layer in the merged flow which is \n//sent back to the Control Layer for execution in flow \"Logic force & freeze readings\". ",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1360,
+        "y": 280,
+        "wires": [
+            [
+                "4fd2642f4d08f3d6",
+                "bdf913ab472151cf",
+                "ea82ece1189f470e"
+            ]
+        ]
+    },
+    {
+        "id": "4fd2642f4d08f3d6",
+        "type": "debug",
+        "z": "5876467d554e446b",
+        "name": "debug 5",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1560,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "8d1c68a33ab4d1d4",
+        "type": "debug",
+        "z": "5876467d554e446b",
+        "name": "debug 7",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1340,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "33c9b9eb0238d85f",
+        "type": "debug",
+        "z": "5876467d554e446b",
+        "name": "debug 6",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1760,
+        "y": 340,
+        "wires": []
     }
 ]
