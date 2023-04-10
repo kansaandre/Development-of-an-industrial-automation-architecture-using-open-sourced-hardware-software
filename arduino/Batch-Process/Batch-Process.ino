@@ -32,8 +32,12 @@
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       
   void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset
-    //Serial communication setup
+      //Timer setup
+      Timer1.initialize(5000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
+      Timer1.attachInterrupt(ReadWriteInOutInterrupt); // Attach the ReadWriteInOutInterrupt() function to the interrupt
+      //Serial communication setup
       Serial.begin(9600);
+
   }
   
   // Global variable decleration with their normal default value
@@ -60,10 +64,7 @@
       uint8_t counter = 0; // Counter used to count how many times sequence has looped
       uint16_t current_time = 0; //ms Used to save time from millis() function
       
-    //Timer setup
-      Timer1.initialize(5000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
-      Timer1.attachInterrupt(ReadWriteInOutInterrupt); // Attach the ReadWriteInOutInterrupt() function to the interrupt
-
+    
       // JSON
         String JSONSTRING; // Declare a JSON string to be able to commuicate JSON data out from the Control Layer to HMI Layer
         uint8_t ErrorCount = 0; // "Logic force & freeze readings" failure to read counter. At =3 JSONOBJ_LastValid is overwritten and freeze/forced values from HMI Layer are replaced with raw sensor values.
@@ -86,7 +87,7 @@
 
 //-------------------------------------------------------------------------------------------------------------------//
   //READ WRITE INPUT OUTPUT INTO JSON OBJECT + JSON SETUP // Functions used for ReadWriteInOutInterrupt (Interrupt loop)
-    StaticJsonDocument<400> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
+    StaticJsonDocument<600> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
     JsonObject JSONOBJ = JSONBUFFER.to<JsonObject>(); // Convert to JsonObject to store key-value pairs because it makes it easy to access and modify the individual values using the corresponding keys.
     JsonObject JSONOBJ_LastValid; // Use to temporary store HMI Layer data "Logic force & freeze readings", fig 10 thesis. Used in case of commuication error.                    
   
@@ -134,14 +135,14 @@
     void ErrorHandler() {
     
     //OVERFLOW ERRORS - tells if the memory pool overflowed in JSON document
-      if (JsonDocument.overflowed() == true) {
+      if (JSONBUFFER.overflowed() == true) {
         Flag_JSONdocumentOverflow_Error = true;
       }
-      else if (Flag_JSONdocumentOverflow_Error == true and JsonDocument.overflowed() == false) {
+      else if (Flag_JSONdocumentOverflow_Error == true and JSONBUFFER.overflowed() == false) {
         Flag_JSONdocumentOverflow_Error = false;
       }
 
-      JSONOBJ["DebugOverflowError"] = Flag_JSONdocumentOverflow_Error();
+      JSONOBJ["DebugOverflowError"] = Flag_JSONdocumentOverflow_Error;
 
     //DESERIALIZATION ERROR - tells if the deserialization of our JSON object stored in document is able to deserialize or not and sent correctly to the HMI layer
       DeserializationError error = deserializeJson(JSONBUFFER, JSONSTRING); // Error msg https://arduinojson.org/v6/api/misc/deserializationerror/ . Note, function clear JSONBUFFER data.
@@ -155,7 +156,7 @@
       }
 
       
-      if (error == DeserializationError::Ok) and (JsonDocument.overflowed() == false) {
+      if (error == DeserializationError::Ok && JSONBUFFER.overflowed() == false) {
 
           JSONOBJ_LastValid.set(JSONOBJ); // Here we store last valid HMI read in case of commuication error reading from HMI Layer "Logic force & freeze readings", see figure 10. 
                                           // We will use this temporary storage of last valid read from the HMI Layer to keep values used in the "Control Process Logic Loop" frozen
@@ -168,7 +169,7 @@
         }
  
 
-      if ((error != DeserializationError::Ok) and (JsonDocument.overflowed() == false) and (ErrorCount < 3)) {
+      if ((error != DeserializationError::Ok) and (JSONBUFFER.overflowed() == false) and (ErrorCount < 3)) {
               ErrorCount = ErrorCount + 1; // Increment of readfailure of "Logic force & freeze reading" (fig 10. thesis) from HMI Layer. At =3 HMI freeze/force data will be dropped and replaced by raw sensor data.
       
               start = JSONOBJ_LastValid["start"];
@@ -187,7 +188,7 @@
               ;
             }
             
-            else if (((error == DeserializationError::Ok) and (JsonDocument.overflowed() == false)) or (ErrorCount >= 3)){ // Read comment about this else if in "JSONOBJ_LastValid.set(JSONOBJ);" line.
+            else if (((error == DeserializationError::Ok) and (JSONBUFFER.overflowed() == false)) or (ErrorCount >= 3)){ // Read comment about this else if in "JSONOBJ_LastValid.set(JSONOBJ);" line.
               start = JSONOBJ["start"];
               stop1 = JSONOBJ["stop1"];
               stop2 = JSONOBJ["stop2"];
