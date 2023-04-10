@@ -1,5 +1,5 @@
 
-//LAST UPDATE (roughly): 10.04.2023 21:33
+//LAST UPDATE (roughly): 10.04.2023 22:11
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -89,13 +89,13 @@
 
 //-------------------------------------------------------------------------------------------------------------------//
   //READ WRITE INPUT OUTPUT INTO JSON OBJECT + JSON SETUP // Functions used for ReadWriteInOutInterrupt (Interrupt loop)
-    StaticJsonDocument<500> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
+    StaticJsonDocument<600> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
     JsonObject JSONOBJ = JSONBUFFER.to<JsonObject>(); // Convert to JsonObject to store key-value pairs because it makes it easy to access and modify the individual values using the corresponding keys.
     JsonObject JSONOBJ_LastValid; // Use to temporary store HMI Layer data "Logic force & freeze readings", fig 10 thesis. Used in case of commuication error.                    
 
     void WriteInLogicVariables(){ // Add our global variables to the JSON document/buffer "JSON" in figure 10. Convert data to JSON.
 
-      JSONBUFFER::clear(); //This function resets the memory pool to default values but doesn’t destroy the memory allocated to our buffer.
+      JSONBUFFER.clear(); //This function resets the memory pool to default values but doesn’t destroy the memory allocated to our buffer.
     
       JSONOBJ["start"] = start; 
       JSONOBJ["stop1"] = stop1;
@@ -143,7 +143,7 @@
       //Arduino uses half-duplex Serial (UART) communication over USB, with separate send (TX) and receive (RX) operations, 
       //avoiding the need to differentiate between data sources.
          
-      deserializeJson(JSONBUFFER, JSONSTRING); // Parse the JSON data string and store it in the JSON document object // Note, it automatically clear memory pool before storing data too.
+      //deserializeJson(JSONBUFFER, JSONSTRING); // Parse the JSON data string and store it in the JSON document object // Note, it automatically clear memory pool before storing data too.
       }                                        // More info --> https://arduinojson.org/v6/api/json/deserializejson/ 
     }
     
