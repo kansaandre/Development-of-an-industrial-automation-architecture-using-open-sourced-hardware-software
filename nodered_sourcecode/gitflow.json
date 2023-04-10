@@ -184,7 +184,7 @@
         "z": "5876467d554e446b",
         "name": "",
         "serial": "3c689f194f494e02",
-        "x": 170,
+        "x": 190,
         "y": 280,
         "wires": [
             [
@@ -280,7 +280,7 @@
         "z": "5876467d554e446b",
         "name": "",
         "serial": "3c689f194f494e02",
-        "x": 1770,
+        "x": 1470,
         "y": 280,
         "wires": []
     },
@@ -292,7 +292,7 @@
         "property": "payload",
         "action": "",
         "pretty": false,
-        "x": 1570,
+        "x": 1290,
         "y": 280,
         "wires": [
             [
@@ -355,7 +355,7 @@
         "reduceInit": "",
         "reduceInitType": "",
         "reduceFixup": "",
-        "x": 1090,
+        "x": 910,
         "y": 280,
         "wires": [
             [
@@ -479,7 +479,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1360,
+        "x": 1100,
         "y": 280,
         "wires": [
             [
@@ -502,7 +502,7 @@
         "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1560,
+        "x": 1280,
         "y": 340,
         "wires": []
     },
@@ -519,7 +519,7 @@
         "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1340,
+        "x": 1080,
         "y": 220,
         "wires": []
     },
@@ -535,7 +535,7 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1760,
+        "x": 1460,
         "y": 340,
         "wires": []
     }

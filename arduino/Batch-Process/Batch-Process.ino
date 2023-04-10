@@ -1,5 +1,5 @@
 
-//LAST UPDATE (roughly): 10.04.2023 01:00
+//LAST UPDATE (roughly): 10.04.2023 02:15
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -129,6 +129,7 @@
 
       String JSONSTRING = Serial.readString(); // Read the incoming JSON data string
       deserializeJson(JSONBUFFER, JSONSTRING); // Parse the JSON data string and store it in the JSON document object
+    }
   
     void ErrorHandler() {
     
@@ -165,8 +166,7 @@
                                           // be used in the main control program and the Control Layer running the plant "blind" solely on Sensor input and Logic until HMI Layer commuication 
                                           // can be achieved again. 
         }
-      }
-    }
+ 
 
       if ((error != DeserializationError::Ok) and (JsonDocument.overflowed() == false) and (ErrorCount < 3)) {
               ErrorCount = ErrorCount + 1; // Increment of readfailure of "Logic force & freeze reading" (fig 10. thesis) from HMI Layer. At =3 HMI freeze/force data will be dropped and replaced by raw sensor data.
@@ -204,8 +204,8 @@
       
               ErrorCount = 0; // Reset error counter
               
-        
-      
+            }
+        }
 
     void ActuatorWritings(){ // Write out "Actuator writings" from Control Layer to the Process Layer. See figure 10. 
       

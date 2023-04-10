@@ -224,7 +224,7 @@
         "resendOnRefresh": true,
         "templateScope": "local",
         "className": "",
-        "x": 440,
+        "x": 320,
         "y": 340,
         "wires": [
             [
@@ -460,7 +460,7 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 720,
+        "x": 620,
         "y": 340,
         "wires": [
             [
@@ -507,22 +507,6 @@
         "wires": []
     },
     {
-        "id": "33c9b9eb0238d85f",
-        "type": "debug",
-        "z": "5876467d554e446b",
-        "name": "debug 6",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 1760,
-        "y": 340,
-        "wires": []
-    },
-    {
         "id": "8d1c68a33ab4d1d4",
         "type": "debug",
         "z": "5876467d554e446b",
@@ -537,6 +521,22 @@
         "statusType": "auto",
         "x": 1340,
         "y": 220,
+        "wires": []
+    },
+    {
+        "id": "33c9b9eb0238d85f",
+        "type": "debug",
+        "z": "5876467d554e446b",
+        "name": "debug 6",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1760,
+        "y": 340,
         "wires": []
     }
 ]
