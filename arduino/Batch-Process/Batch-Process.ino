@@ -1,5 +1,5 @@
 
-//LAST UPDATE (roughly): 10.04.2023 22:11
+//LAST UPDATE (roughly): 10.04.2023 23:59
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -66,6 +66,7 @@
       uint8_t counter = 0; // Counter used to count how many times sequence has looped
       uint16_t current_time = 0; //ms Used to save time from millis() function
       String flow = ""; // Variable used to identify string when sent on serial line in JSON format
+      String message1, message2; // Used to retrive, identify and separate data from HMI layer to Control Layer
      
     // JSON
       String JSONSTRING; // Declare a JSON string to be able to commuicate JSON data out from the Control Layer to HMI Layer
@@ -129,29 +130,40 @@
       serializeJson(JSONBUFFER, JSONSTRING); // Function to convert data to JSON format string.
       Serial.println(JSONSTRING); // Print JSON string to serial monitor with Serial.println - Sending data over serial line to Node-RED
     }
+
+    void readSerialData() { 
+  
+      if (Serial.available()) {
+        while (Serial.available()) {
+          char c = (char)Serial.read();
+          JSONSTRING += c;
+        }
+    
+      // Separate the JSON messages by a newline character (We are reading in LogicForceFreezeReadings and SensorDataReadings at the same time due to simulating process in Node-RED as well)
+      uint16_t separatorIndex = JSONSTRING.indexOf('\n');
+      message1 = JSONSTRING.substring(0, separatorIndex);
+      message2 = JSONSTRING.substring(separatorIndex + 1);
+
+      if (message1.indexOf("SensorDataReading") != -1) {
+        SensorDataReading_string = message1; 
+        LogicForceFreezeReadings_string = message2;
+        } 
+      else if (message2.indexOf("SensorDataReading") != -1) {
+        SensorDataReading_string = message2; 
+        LogicForceFreezeReadings_string = message1;
+        }
+      }
+    }
     
     void LogicForceFreezeReadings() { //"Logic force & freeze readings" HMI Layer to Control Layer, see figure 3 & 10 in thesis document (v.1)
 
-      if (Serial.available()) { // Check if there is data available on the serial port
-        JSONSTRING = ""; // Clear the JSONSTRING variable
-        
-        while (Serial.available()) { // Keep reading until all data has been read
-          char c = (char)Serial.read(); // Read a character from the serial port
-          JSONSTRING += c; // Append the character to the JSONSTRING variable
-
-        }
-      //Arduino uses half-duplex Serial (UART) communication over USB, with separate send (TX) and receive (RX) operations, 
-      //avoiding the need to differentiate between data sources.
-         
-      //deserializeJson(JSONBUFFER, JSONSTRING); // Parse the JSON data string and store it in the JSON document object // Note, it automatically clear memory pool before storing data too.
+      deserializeJson(JSONBUFFER, LogicForceFreezeReadings_string); // Parse the JSON data string and store it in the JSON document object // Note, it automatically clear memory pool before storing data too.
       }                                        // More info --> https://arduinojson.org/v6/api/json/deserializejson/ 
-    }
     
-  
     void ErrorHandler() {
 
     //DESERIALIZATION ERROR - tells if the deserialization of our JSON object stored in document is able to deserialize or not and sent correctly to the HMI layer
-      DeserializationError error = deserializeJson(JSONBUFFER, JSONSTRING); // Error msg https://arduinojson.org/v6/api/misc/deserializationerror/ . Note, function clear JSONBUFFER data.
+      DeserializationError error = deserializeJson(JSONBUFFER, LogicForceFreezeReadings_string); // Error msg https://arduinojson.org/v6/api/misc/deserializationerror/ . Note, function clear JSONBUFFER data.
         JSONOBJ["DebugReadLogicForceFreezeError"] = error.c_str(); // Convert error text to string, will be sent to HMI Layer in next interrupt call. Documentation in hyperlink found in line above. 
 
       if (error != DeserializationError::Ok){
@@ -161,7 +173,6 @@
         Flag_LogicForceFreezeReadings_Error = false; // set flag false = GOOD read of Logic force & freeze reading (fig 10. thesis)
       }
 
-      
       if (error == DeserializationError::Ok) {
 
           JSONOBJ_LastValid.set(JSONOBJ); // Here we store last valid HMI read in case of commuication error reading from HMI Layer "Logic force & freeze readings", see figure 10. 
@@ -240,19 +251,8 @@
     // start = digitalRead()
     // stop1 = digitalRead()
     //Etc. etc. Example how to read data from input ports when real sensors are connected to controller
-
-      if (Serial.available()) { // Check if there is data available on the serial port
-          JSONSTRING = ""; // Clear the JSONSTRING variable
-        
-        while (Serial.available()) { // Keep reading until all data has been read
-          char c = (char)Serial.read(); // Read a character from the serial port
-          JSONSTRING += c; // Append the character to the JSONSTRING variable
-
-        }
-      //Arduino uses half-duplex Serial (UART) communication over USB, with separate send (TX) and receive (RX) operations, 
-      //avoiding the need to differentiate between data sources.
          
-      deserializeJson(JSONBUFFER, JSONSTRING); // Parse the JSON data string and store it in the JSON document object // Note, it automatically clear memory pool before storing data too.
+      deserializeJson(JSONBUFFER, SensorDataReading_string); // Parse the JSON data string and store it in the JSON document object // Note, it automatically clear memory pool before storing data too.
       }                                        // More info --> https://arduinojson.org/v6/api/json/deserializejson/ 
     }
 
@@ -263,7 +263,9 @@
       WriteInLogicVariables(); // "JSON" (see figure 10.) - add properties to the JSON objects which is used to store the global variables.         
       
       SensorLogicDataWritings(); // Write out "Sensor & Logic data writings" from the Control Layer to the HMI Layer. Enable data to be accessible to operators/engineers.
-      
+
+      readSerialData(); // Separate the JSON messages by a newline character (We are reading in LogicForceFreezeReadings and SensorDataReadings at the same time due to simulating process in Node-RED as well)
+
       LogicForceFreezeReadings(); // Read in "Logic force & freeze readings@ from the HMI Layer to the Control Layer. Modified data from operators/engineers (freeze & force).
 
       ErrorHandler(); // Error handler - In here we set variables in the Control Layer equal to the "new input" from HMI Layer = LogicForceFreezeReadings, in case of error values from HMI are frozen until 4th interrupt or error goes away. 
