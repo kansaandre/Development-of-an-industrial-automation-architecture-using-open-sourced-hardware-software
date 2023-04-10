@@ -129,7 +129,16 @@
     
     void LogicForceFreezeReadings() { //"Logic force & freeze readings" HMI Layer to Control Layer, see figure 3 & 10 in thesis document (v.1)
 
-      String JSONSTRING = Serial.readString(); // Read the incoming JSON data string
+      if (Serial.available()) { // Check if there is data available on the serial port
+        JSONSTRING = ""; // Clear the JSONSTRING variable
+        while (Serial.available()) { // Keep reading until all data has been read
+          char c = (char)Serial.read(); // Read a character from the serial port
+          JSONSTRING += c; // Append the character to the JSONSTRING variable
+
+      //Arduino uses half-duplex Serial (UART) communication over USB, with separate send (TX) and receive (RX) operations, 
+      //avoiding the need to differentiate between data sources.
+    }
+
       deserializeJson(JSONBUFFER, JSONSTRING); // Parse the JSON data string and store it in the JSON document object
     }
   
