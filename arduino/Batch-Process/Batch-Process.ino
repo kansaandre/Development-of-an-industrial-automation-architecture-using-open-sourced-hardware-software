@@ -1,4 +1,5 @@
-//LAST UPDATE: 08.04.2023 12:35
+
+//LAST UPDATE (roughly): 10.04.2023 01:00
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -30,10 +31,7 @@
       //If you're working with a different microcontroller, you may need to find a library that's compatible with your specific hardware or use the built-in timer functionalities of that microcontroller.
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       
-  void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset.
-    //Timer setup
-      Timer1.initialize(5000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
-      Timer1.attachInterrupt(ReadWriteInOutInterrupt); // Attach the ReadWriteInOutInterrupt() function to the interrupt
+  void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset
     //Serial communication setup
       Serial.begin(9600);
   }
@@ -61,12 +59,17 @@
     // Program Variables (program variables)
       uint8_t counter = 0; // Counter used to count how many times sequence has looped
       uint16_t current_time = 0; //ms Used to save time from millis() function
+      
+    //Timer setup
+      Timer1.initialize(5000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
+      Timer1.attachInterrupt(ReadWriteInOutInterrupt); // Attach the ReadWriteInOutInterrupt() function to the interrupt
+
       // JSON
         String JSONSTRING; // Declare a JSON string to be able to commuicate JSON data out from the Control Layer to HMI Layer
-        uint8_t LFFR_ReadFailCount = 0; // "Logic force & freeze readings" failure to read counter. At =3 JSONOBJ_LastValid is overwritten and freeze/forced values from HMI Layer are replaced with raw sensor values.
+        uint8_t ErrorCount = 0; // "Logic force & freeze readings" failure to read counter. At =3 JSONOBJ_LastValid is overwritten and freeze/forced values from HMI Layer are replaced with raw sensor values.
         //Flags
           boolean Flag_LogicForceFreezeReadings_Error = false; // Flag is set if Control Layer is unable to read data from the HMI layer (Incoming data = "Logic force & freeze readings", fig 10. thesis) 
-    
+          boolean Flag_JSONdocumentOverflow_Error = false;
     // States (program variables)
       enum states { //Declare our states made direectly from Figure 9. in thesis document. 
         ready = 1,
@@ -108,63 +111,50 @@
       JSONOBJ["temp"] = temp;
       JSONOBJ["counter"] = counter;
       JSONOBJ["Flag_LogicForceFreezeReadings_Error"] = Flag_LogicForceFreezeReadings_Error;  
-      JSONOBJ["LFFR_ReadFailCount"] = LFFR_ReadFailCount; 
+      JSONOBJ["Flag_JSONdocumentOverflow_Error"] = Flag_JSONdocumentOverflow_Error;
+      JSONOBJ["ErrorCount"] = ErrorCount; 
       JSONOBJ["CurrentState"] = state; 
     }
     
     void SensorLogicDataWritings(){ //"Sensor & Logic data writing" Control Layer to HMI Layer, see figure 3 & 10 in thesis document (v.1)
+     
       if (JSONSTRING.length() > 0) {
         JSONSTRING = ""; // Clear the JSONSTRING variable
       }
-      serializeJson
-      (JSONBUFFER, JSONSTRING); // Function to convert data to JSON format string.
+      serializeJson(JSONBUFFER, JSONSTRING); // Function to convert data to JSON format string.
       Serial.println(JSONSTRING); // Print JSON string to serial monitor with Serial.println
     }
     
     void LogicForceFreezeReadings() { //"Logic force & freeze readings" HMI Layer to Control Layer, see figure 3 & 10 in thesis document (v.1)
-      
-      DeserializationError error = deserializeJson(JSONBUFFER, JSONSTRING); // Error msg https://arduinojson.org/v6/api/misc/deserializationerror/ . Note, function clear JSONBUFFER data.
-        JSONOBJ["DebugReadLogicForceFreeze"] = error.c_str(); // Convert error text to string, will be sent to HMI Layer in next interrupt call. Documentation in hyperlink found in line above. 
 
-      if ((error != DeserializationError::Ok) and (LFFR_ReadFailCount < 3)) {
-        Flag_LogicForceFreezeReadings_Error = true; // Set a flag true = BAD read of Logic force & freeze reading (fig 10. thesis)
-        LFFR_ReadFailCount = LFFR_ReadFailCount + 1; // Increment of readfailure of "Logic force & freeze reading" (fig 10. thesis) from HMI Layer. At =3 HMI freeze/force data will be dropped and replaced by raw sensor data.
-
-        start = JSONOBJ_LastValid["start"];
-        stop1 = JSONOBJ_LastValid["stop1"];
-        stop2 = JSONOBJ_LastValid["stop2"];
-        heater = JSONOBJ_LastValid["heater"];
-        stirrer = JSONOBJ_LastValid["stirrer"];
-        valveA = JSONOBJ_LastValid["valveA"];
-        valveB = JSONOBJ_LastValid["valveB"];
-        valveC = JSONOBJ_LastValid["valveC"];
-        s1 = JSONOBJ_LastValid["s1"];
-        s2 = JSONOBJ_LastValid["s2"];
-        s3 = JSONOBJ_LastValid["s3"];
-        temp = JSONOBJ_LastValid["temp"];
-        counter = JSONOBJ_LastValid["counter"]
-        ;
+      String JSONSTRING = Serial.readString(); // Read the incoming JSON data string
+      deserializeJson(JSONBUFFER, JSONSTRING); // Parse the JSON data string and store it in the JSON document object
+  
+    void ErrorHandler() {
+    
+    //OVERFLOW ERRORS - tells if the memory pool overflowed in JSON document
+      if (JsonDocument.overflowed() == true) {
+        Flag_JSONdocumentOverflow_Error = true;
       }
-      
-      else if ((error == DeserializationError::Ok) or (LFFR_ReadFailCount >= 3)){ // Read comment about this else if in "JSONOBJ_LastValid.set(JSONOBJ);" line.
-        start = JSONOBJ["start"];
-        stop1 = JSONOBJ["stop1"];
-        stop2 = JSONOBJ["stop2"];
-        heater = JSONOBJ["heater"];
-        stirrer = JSONOBJ["stirrer"];
-        valveA = JSONOBJ["valveA"];
-        valveB = JSONOBJ["valveB"];
-        valveC = JSONOBJ["valveC"];
-        s1 = JSONOBJ["s1"];
-        s2 = JSONOBJ["s2"];
-        s3 = JSONOBJ["s3"];
-        temp = JSONOBJ["temp"];
-        counter = JSONOBJ["counter"];
+      else if (Flag_JSONdocumentOverflow_Error == true and JsonDocument.overflowed() == false) {
+        Flag_JSONdocumentOverflow_Error = false;
+      }
 
-        LFFR_ReadFailCount = 0; // Reset error counter
-        
-        if (error == DeserializationError::Ok){
-          Flag_LogicForceFreezeReadings_Error = false; // set flag false = GOOD read of Logic force & freeze reading (fig 10. thesis)
+      JSONOBJ["DebugOverflowError"] = Flag_JSONdocumentOverflow_Error();
+
+    //DESERIALIZATION ERROR - tells if the deserialization of our JSON object stored in document is able to deserialize or not and sent correctly to the HMI layer
+      DeserializationError error = deserializeJson(JSONBUFFER, JSONSTRING); // Error msg https://arduinojson.org/v6/api/misc/deserializationerror/ . Note, function clear JSONBUFFER data.
+        JSONOBJ["DebugReadLogicForceFreezeError"] = error.c_str(); // Convert error text to string, will be sent to HMI Layer in next interrupt call. Documentation in hyperlink found in line above. 
+
+      if (error != DeserializationError::Ok){
+        Flag_LogicForceFreezeReadings_Error = true; // Set a flag true = BAD read of Logic force & freeze reading (fig 10. thesis)
+      }
+      else if (error == DeserializationError::Ok){
+        Flag_LogicForceFreezeReadings_Error = false; // set flag false = GOOD read of Logic force & freeze reading (fig 10. thesis)
+      }
+
+      
+      if (error == DeserializationError::Ok) and (JsonDocument.overflowed() == false) {
 
           JSONOBJ_LastValid.set(JSONOBJ); // Here we store last valid HMI read in case of commuication error reading from HMI Layer "Logic force & freeze readings", see figure 10. 
                                           // We will use this temporary storage of last valid read from the HMI Layer to keep values used in the "Control Process Logic Loop" frozen
@@ -177,6 +167,45 @@
         }
       }
     }
+
+      if ((error != DeserializationError::Ok) and (JsonDocument.overflowed() == false) and (ErrorCount < 3)) {
+              ErrorCount = ErrorCount + 1; // Increment of readfailure of "Logic force & freeze reading" (fig 10. thesis) from HMI Layer. At =3 HMI freeze/force data will be dropped and replaced by raw sensor data.
+      
+              start = JSONOBJ_LastValid["start"];
+              stop1 = JSONOBJ_LastValid["stop1"];
+              stop2 = JSONOBJ_LastValid["stop2"];
+              heater = JSONOBJ_LastValid["heater"];
+              stirrer = JSONOBJ_LastValid["stirrer"];
+              valveA = JSONOBJ_LastValid["valveA"];
+              valveB = JSONOBJ_LastValid["valveB"];
+              valveC = JSONOBJ_LastValid["valveC"];
+              s1 = JSONOBJ_LastValid["s1"];
+              s2 = JSONOBJ_LastValid["s2"];
+              s3 = JSONOBJ_LastValid["s3"];
+              temp = JSONOBJ_LastValid["temp"];
+              counter = JSONOBJ_LastValid["counter"]
+              ;
+            }
+            
+            else if (((error == DeserializationError::Ok) and (JsonDocument.overflowed() == false)) or (ErrorCount >= 3)){ // Read comment about this else if in "JSONOBJ_LastValid.set(JSONOBJ);" line.
+              start = JSONOBJ["start"];
+              stop1 = JSONOBJ["stop1"];
+              stop2 = JSONOBJ["stop2"];
+              heater = JSONOBJ["heater"];
+              stirrer = JSONOBJ["stirrer"];
+              valveA = JSONOBJ["valveA"];
+              valveB = JSONOBJ["valveB"];
+              valveC = JSONOBJ["valveC"];
+              s1 = JSONOBJ["s1"];
+              s2 = JSONOBJ["s2"];
+              s3 = JSONOBJ["s3"];
+              temp = JSONOBJ["temp"];
+              counter = JSONOBJ["counter"];
+      
+              ErrorCount = 0; // Reset error counter
+              
+        
+      
 
     void ActuatorWritings(){ // Write out "Actuator writings" from Control Layer to the Process Layer. See figure 10. 
       
@@ -196,6 +225,8 @@
       SensorLogicDataWritings(); // Write out "Sensor & Logic data writings" from the Control Layer to the HMI Layer. Enable data to be accessible to operators/engineers.
 
       LogicForceFreezeReadings(); // Read in "Logic force & freeze readings@ from the HMI Layer to the Control Layer. Modified data from operators/engineers (freeze & force).
+
+      ErrorHandler(); 
 
       ActuatorWritings(); // Write out "Actuator writings" from Control Layer to the Process Layer. See figure 10. 
       
