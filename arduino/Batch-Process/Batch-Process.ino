@@ -1,5 +1,5 @@
 
-//LAST UPDATE (roughly): 10.04.2023 15:00
+//LAST UPDATE (roughly): 10.04.2023 17:00
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -92,16 +92,11 @@
     StaticJsonDocument<500> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
     JsonObject JSONOBJ = JSONBUFFER.to<JsonObject>(); // Convert to JsonObject to store key-value pairs because it makes it easy to access and modify the individual values using the corresponding keys.
     JsonObject JSONOBJ_LastValid; // Use to temporary store HMI Layer data "Logic force & freeze readings", fig 10 thesis. Used in case of commuication error.                    
-  
-    void SensorDataReadings(){ //"Sensor data readings" Process Layer to Control Layer, see figure 3 & 10 in thesis document.
-      // start = digitalRead()
-      // stop1 = digitalRead()
-      //Etc. etc. Example how to read data from input ports when real sensors are connected to controller
-    }
 
-    void JsonObjPropertyAdd(){ // Add our global variables to the JSON document/buffer "JSON" in figure 10. Convert data to JSON.
-      
+    void WriteInLogicVariables(){ // Add our global variables to the JSON document/buffer "JSON" in figure 10. Convert data to JSON.
 
+      JSONBUFFER::clear(); //This function resets the memory pool to default values but doesn’t destroy the memory allocated to our buffer.
+    
       JSONOBJ["start"] = start; 
       JSONOBJ["stop1"] = stop1;
       JSONOBJ["stop2"] = stop2;
@@ -118,17 +113,19 @@
       JSONOBJ["Flag_LogicForceFreezeReadings_Error"] = Flag_LogicForceFreezeReadings_Error;  
       JSONOBJ["ErrorCount"] = ErrorCount; 
       JSONOBJ["CurrentState"] = state; 
+      JSONOBJ["CurrentFlow"] = flow;
       
     }
     
     void SensorLogicDataWritings(){ //"Sensor & Logic data writing" Control Layer to HMI Layer, see figure 3 & 10 in thesis document (v.1)
 
-      flow = "SensorLogicDataWritings"; 
+      flow = "SensorLogicDataWritings"; // Identification tag to flow when entering serial line
       JSONOBJ["CurrentFlow"] = flow;
      
       if (JSONSTRING.length() > 0) {
         JSONSTRING = ""; // Clear the JSONSTRING variable
       }
+      
       serializeJson(JSONBUFFER, JSONSTRING); // Function to convert data to JSON format string.
       Serial.println(JSONSTRING); // Print JSON string to serial monitor with Serial.println - Sending data over serial line to Node-RED
     }
@@ -137,17 +134,19 @@
 
       if (Serial.available()) { // Check if there is data available on the serial port
         JSONSTRING = ""; // Clear the JSONSTRING variable
+        
         while (Serial.available()) { // Keep reading until all data has been read
           char c = (char)Serial.read(); // Read a character from the serial port
           JSONSTRING += c; // Append the character to the JSONSTRING variable
 
+        }
       //Arduino uses half-duplex Serial (UART) communication over USB, with separate send (TX) and receive (RX) operations, 
       //avoiding the need to differentiate between data sources.
-        } 
-      
-      deserializeJson(JSONBUFFER, JSONSTRING); // Parse the JSON data string and store it in the JSON document object // Serial to object
-      }
+         
+      deserializeJson(JSONBUFFER, JSONSTRING); // Parse the JSON data string and store it in the JSON document object // Note, it automatically clear memory pool before storing data too.
+      }                                        // More info --> https://arduinojson.org/v6/api/json/deserializejson/ 
     }
+    
   
     void ErrorHandler() {
 
@@ -227,7 +226,7 @@
       // For this sketch as it is now we can still see actuator signals which is sent to HMI Layer with JSON. There
       // the signals are displayed with plots and graphical interfaces.  
 
-      flow = "ActuatorWritings"; 
+      flow = "ActuatorWritings";   // Identification tag to flow when entering serial line
       JSONOBJ["CurrentFlow"] = flow;
 
       if (JSONSTRING.length() > 0) {
@@ -235,31 +234,44 @@
       }
       serializeJson(JSONBUFFER, JSONSTRING); // Function to convert data to JSON format string.
       Serial.println(JSONSTRING); // Print JSON string to serial monitor with Serial.println - Sending data over serial line to Node-RED
-            
-      
     }
+
+    void SensorDataReadings(){ //"Sensor data readings" Process Layer to Control Layer, see figure 3 & 10 in thesis document.
+    // start = digitalRead()
+    // stop1 = digitalRead()
+    //Etc. etc. Example how to read data from input ports when real sensors are connected to controller
+
+      if (Serial.available()) { // Check if there is data available on the serial port
+          JSONSTRING = ""; // Clear the JSONSTRING variable
+        
+        while (Serial.available()) { // Keep reading until all data has been read
+          char c = (char)Serial.read(); // Read a character from the serial port
+          JSONSTRING += c; // Append the character to the JSONSTRING variable
+
+        }
+      //Arduino uses half-duplex Serial (UART) communication over USB, with separate send (TX) and receive (RX) operations, 
+      //avoiding the need to differentiate between data sources.
+         
+      deserializeJson(JSONBUFFER, JSONSTRING); // Parse the JSON data string and store it in the JSON document object // Note, it automatically clear memory pool before storing data too.
+      }                                        // More info --> https://arduinojson.org/v6/api/json/deserializejson/ 
+    }
+
       
   //Read/Write Time-Interrupt Loop
     void ReadWriteInOutInterrupt (){ 
 
-      JSONBUFFER.clear();
-      
-      SensorDataReadings(); // Read in "Sensor data readings" from Process Layer to Control Layer (see figure 10. in thesis document)
-
-      JSONBUFFER.clear();
-
-      JsonObjPropertyAdd(); // "JSON" (see figure 10.) - add properties to the JSON objects which is used to store the global variables.         
+      WriteInLogicVariables(); // "JSON" (see figure 10.) - add properties to the JSON objects which is used to store the global variables.         
       
       SensorLogicDataWritings(); // Write out "Sensor & Logic data writings" from the Control Layer to the HMI Layer. Enable data to be accessible to operators/engineers.
-
-      JSONBUFFER.clear();
       
       LogicForceFreezeReadings(); // Read in "Logic force & freeze readings@ from the HMI Layer to the Control Layer. Modified data from operators/engineers (freeze & force).
 
-      ErrorHandler(); 
+      ErrorHandler(); // Error handler - In here we set variables in the Control Layer equal to the "new input" from HMI Layer = LogicForceFreezeReadings, in case of error values from HMI are frozen until 4th interrupt or error goes away. 
 
       ActuatorWritings(); // Write out "Actuator writings" from Control Layer to the Process Layer. See figure 10. 
-      
+
+      SensorDataReadings(); // Read in new "Sensor data readings" from Process Layer to Control Layer (see figure 10. in thesis document)
+
     }
 
 
