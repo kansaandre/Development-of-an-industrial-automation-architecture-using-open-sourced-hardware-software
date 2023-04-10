@@ -1,5 +1,5 @@
 
-//LAST UPDATE (roughly): 10.04.2023 02:15
+//LAST UPDATE (roughly): 10.04.2023 02:34
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -63,14 +63,15 @@
     // Program Variables (program variables)
       uint8_t counter = 0; // Counter used to count how many times sequence has looped
       uint16_t current_time = 0; //ms Used to save time from millis() function
-      
-    
+     
       // JSON
         String JSONSTRING; // Declare a JSON string to be able to commuicate JSON data out from the Control Layer to HMI Layer
         uint8_t ErrorCount = 0; // "Logic force & freeze readings" failure to read counter. At =3 JSONOBJ_LastValid is overwritten and freeze/forced values from HMI Layer are replaced with raw sensor values.
         //Flags
           boolean Flag_LogicForceFreezeReadings_Error = false; // Flag is set if Control Layer is unable to read data from the HMI layer (Incoming data = "Logic force & freeze readings", fig 10. thesis) 
           boolean Flag_JSONdocumentOverflow_Error = false;
+
+          
     // States (program variables)
       enum states { //Declare our states made direectly from Figure 9. in thesis document. 
         ready = 1,
@@ -87,7 +88,7 @@
 
 //-------------------------------------------------------------------------------------------------------------------//
   //READ WRITE INPUT OUTPUT INTO JSON OBJECT + JSON SETUP // Functions used for ReadWriteInOutInterrupt (Interrupt loop)
-    StaticJsonDocument<600> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
+    StaticJsonDocument<800> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
     JsonObject JSONOBJ = JSONBUFFER.to<JsonObject>(); // Convert to JsonObject to store key-value pairs because it makes it easy to access and modify the individual values using the corresponding keys.
     JsonObject JSONOBJ_LastValid; // Use to temporary store HMI Layer data "Logic force & freeze readings", fig 10 thesis. Used in case of commuication error.                    
   
