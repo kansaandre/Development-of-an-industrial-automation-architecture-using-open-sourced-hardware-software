@@ -1,5 +1,5 @@
 
-//LAST UPDATE (roughly): 10.04.2023 23:59
+//LAST UPDATE (roughly): 11.04.2023 00:40
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -31,16 +31,6 @@
       //If you're working with a different microcontroller, you may need to find a library that's compatible with your specific hardware or use the built-in timer functionalities of that microcontroller.
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       
-  void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset
-
-    //Timer setup
-      Timer1.initialize(5000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
-      Timer1.attachInterrupt(ReadWriteInOutInterrupt); // Attach the ReadWriteInOutInterrupt() function to the interrupt
-      
-      //Serial communication setup
-      Serial.begin(9600);
-
-  }
   
   // Global variable decleration with their normal default value
     
@@ -66,7 +56,7 @@
       uint8_t counter = 0; // Counter used to count how many times sequence has looped
       uint16_t current_time = 0; //ms Used to save time from millis() function
       String flow = ""; // Variable used to identify string when sent on serial line in JSON format
-      String message1, message2; // Used to retrive, identify and separate data from HMI layer to Control Layer
+      String message1, message2, SensorDataReading_string, LogicForceFreezeReadings_string; // Used to retrive, identify and separate data from HMI layer to Control Layer
      
     // JSON
       String JSONSTRING; // Declare a JSON string to be able to commuicate JSON data out from the Control Layer to HMI Layer
@@ -254,11 +244,11 @@
          
       deserializeJson(JSONBUFFER, SensorDataReading_string); // Parse the JSON data string and store it in the JSON document object // Note, it automatically clear memory pool before storing data too.
       }                                        // More info --> https://arduinojson.org/v6/api/json/deserializejson/ 
-    }
+    
 
       
   //Read/Write Time-Interrupt Loop
-    void ReadWriteInOutInterrupt (){ 
+    void ReadWriteInOutInterrupt() { 
 
       WriteInLogicVariables(); // "JSON" (see figure 10.) - add properties to the JSON objects which is used to store the global variables.         
       
@@ -338,6 +328,18 @@
           }
        }
     }
+
+
+    void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset
+
+    //Timer setup
+      Timer1.initialize(5000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
+      Timer1.attachInterrupt(ReadWriteInOutInterrupt); // Attach the ReadWriteInOutInterrupt() function to the interrupt
+      
+      //Serial communication setup
+      Serial.begin(9600);
+
+  }
 
     
 

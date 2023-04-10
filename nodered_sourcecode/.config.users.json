@@ -17,12 +17,14 @@
             }
         },
         "debug": {
-            "filter": "filterSelected",
+            "filter": "filterAll",
             "filteredNodes": [
                 "0adceff2ee7a8a38",
                 "d559c9bf4d8f3f8b",
                 "a2a0b50b49465540",
-                "d5854ef392dd02a6"
+                "d5854ef392dd02a6",
+                "e999e721ad1cf0a7",
+                "e0f5a81c29c3c248"
             ]
         },
         "menu-menu-item-sidebar": true
