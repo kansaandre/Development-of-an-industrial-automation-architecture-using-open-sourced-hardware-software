@@ -77,8 +77,8 @@
       states state = ready; // Default/inital state   
 
 //-------------------------------------------------------------------------------------------------------------------//
-  //READ WRITE INPUT OUTPUT INTO JSON OBJECT + JSON SETUP // Functions used for ReadWriteInOutInterrupt (Interrupt loop)
-    StaticJsonDocument<400> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
+//READ WRITE INPUT OUTPUT INTO JSON OBJECT + JSON SETUP // Functions used for ReadWriteInOutInterrupt (Interrupt loop)
+    StaticJsonDocument<800> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
     JsonObject JSONOBJ = JSONBUFFER.to<JsonObject>(); // Convert to JsonObject to store key-value pairs because it makes it easy to access and modify the individual values using the corresponding keys.
     JsonObject JSONOBJ_LastValid; // Use to temporary store HMI Layer data "Logic force & freeze readings", fig 10 thesis. Used in case of commuication error.                    
 
@@ -218,18 +218,28 @@
             }
         }
 
-    void ActuatorWritings(){ // Write out "Actuator writings" from Control Layer to the Process Layer. See figure 10. 
-      
-      // As of now we have not hooked up any physical actuators to our Control Layer therefore this remain empty.
-      // For this sketch as it is now we can still see actuator signals which is sent to HMI Layer with JSON. There
-      // the signals are displayed with plots and graphical interfaces.  
-
-      deserializeJson(JSONBUFFER, LogicForceFreezeReadings_string); // Parse the JSON data string and store it in the JSON document object // Note, it automatically clear memory pool before storing data too.
-      }
-
-      flow = "ActuatorWritings";   // Identification tag to flow when entering serial line
+    void ActuatorWritings() {
+      // Update JSONOBJ with the variables after the ErrorHandler() function call
+      JSONOBJ["start"] = start;
+      JSONOBJ["stop1"] = stop1;
+      JSONOBJ["stop2"] = stop2;
+      JSONOBJ["heater"] = heater;
+      JSONOBJ["stirrer"] = stirrer;
+      JSONOBJ["valveA"] = valveA;
+      JSONOBJ["valveB"] = valveB;
+      JSONOBJ["valveC"] = valveC;
+      JSONOBJ["s1"] = s1;
+      JSONOBJ["s2"] = s2;
+      JSONOBJ["s3"] = s3;
+      JSONOBJ["temp"] = temp;
+      JSONOBJ["counter"] = counter;
+      JSONOBJ["Flag_LogicForceFreezeReadings_Error"] = Flag_LogicForceFreezeReadings_Error;
+      JSONOBJ["ErrorCount"] = ErrorCount;
+      JSONOBJ["CurrentState"] = state;
+    
+      flow = "ActuatorWritings"; // Identification tag to flow when entering serial line
       JSONOBJ["CurrentFlow"] = flow;
-
+    
       if (JSONSTRING.length() > 0) {
         JSONSTRING = ""; // Clear the JSONSTRING variable
       }
@@ -337,7 +347,7 @@
       Timer1.attachInterrupt(ReadWriteInOutInterrupt); // Attach the ReadWriteInOutInterrupt() function to the interrupt
       
       //Serial communication setup
-      Serial.begin(9600);
+      Serial.begin(38400);
 
   }
 
