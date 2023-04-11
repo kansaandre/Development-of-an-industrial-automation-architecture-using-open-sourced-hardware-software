@@ -1,5 +1,5 @@
 
-//LAST UPDATE (roughly): 11.04.2023 00:40
+//LAST UPDATE (roughly): 11.04.2023 02:10
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -31,7 +31,6 @@
       //If you're working with a different microcontroller, you may need to find a library that's compatible with your specific hardware or use the built-in timer functionalities of that microcontroller.
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       
-  
   // Global variable decleration with their normal default value
     
     // Buttons (input)
@@ -59,11 +58,10 @@
       String message1, message2, SensorDataReading_string, LogicForceFreezeReadings_string; // Used to retrive, identify and separate data from HMI layer to Control Layer
      
     // JSON
-      String JSONSTRING; // Declare a JSON string to be able to commuicate JSON data out from the Control Layer to HMI Layer
+      String JSONSTRING = ""; // Declare a JSON string to be able to commuicate JSON data out from the Control Layer to HMI Layer
       uint8_t ErrorCount = 0; // "Logic force & freeze readings" failure to read counter. At =3 JSONOBJ_LastValid is overwritten and freeze/forced values from HMI Layer are replaced with raw sensor values.
       //Flags
         boolean Flag_LogicForceFreezeReadings_Error = false; // Flag is set if Control Layer is unable to read data from the HMI layer (Incoming data = "Logic force & freeze readings", fig 10. thesis) 
-
           
     // States (program variables)
       enum states { //Declare our states made direectly from Figure 9. in thesis document. 
@@ -80,11 +78,12 @@
 
 //-------------------------------------------------------------------------------------------------------------------//
   //READ WRITE INPUT OUTPUT INTO JSON OBJECT + JSON SETUP // Functions used for ReadWriteInOutInterrupt (Interrupt loop)
-    StaticJsonDocument<600> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
+    StaticJsonDocument<400> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
     JsonObject JSONOBJ = JSONBUFFER.to<JsonObject>(); // Convert to JsonObject to store key-value pairs because it makes it easy to access and modify the individual values using the corresponding keys.
     JsonObject JSONOBJ_LastValid; // Use to temporary store HMI Layer data "Logic force & freeze readings", fig 10 thesis. Used in case of commuication error.                    
 
-    void WriteInLogicVariables(){ // Add our global variables to the JSON document/buffer "JSON" in figure 10. Convert data to JSON.
+    void WriteInLogicVariables(){ // Add our global variables to the JSON document/buffer "JSON" in figure 10. Convert data to JSON. 
+                                  // This will update the "fresh" variables from the "Controll Process Logic Loop" into our JSONBUFFER. 
 
       JSONBUFFER.clear(); //This function resets the memory pool to default values but doesn’t destroy the memory allocated to our buffer.
     
@@ -110,18 +109,17 @@
     
     void SensorLogicDataWritings(){ //"Sensor & Logic data writing" Control Layer to HMI Layer, see figure 3 & 10 in thesis document (v.1)
 
-      flow = "SensorLogicDataWritings"; // Identification tag to flow when entering serial line
+      flow = "SensorLogicDataWritings"; // Identification tag to flow when entering serial line - Used to separate data inside Node-Red. 
       JSONOBJ["CurrentFlow"] = flow;
      
       if (JSONSTRING.length() > 0) {
-        JSONSTRING = ""; // Clear the JSONSTRING variable
+        JSONSTRING = ""; // Clear the JSONSTRING variable if jsonstring has some data written on it already.
       }
-      
       serializeJson(JSONBUFFER, JSONSTRING); // Function to convert data to JSON format string.
       Serial.println(JSONSTRING); // Print JSON string to serial monitor with Serial.println - Sending data over serial line to Node-RED
     }
 
-    void readSerialData() { 
+    void readSerialData() { // Read serial data from Node-Red, consists of multiple msg.payloads and need to be separated. 
   
       if (Serial.available()) {
         while (Serial.available()) {
@@ -195,7 +193,6 @@
               
               Flag_LogicForceFreezeReadings_Error = JSONOBJ["Flag_LogicForceFreezeReadings_Error"];
               ErrorCount = JSONOBJ["ErrorCount"];
-              state = JSONOBJ["CurrentState"];
             }
             
             else if ((error == DeserializationError::Ok) or (ErrorCount >= 3)){ // Read comment about this else if in "JSONOBJ_LastValid.set(JSONOBJ);" line.
@@ -333,7 +330,7 @@
     void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset
 
     //Timer setup
-      Timer1.initialize(5000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
+      Timer1.initialize(10000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
       Timer1.attachInterrupt(ReadWriteInOutInterrupt); // Attach the ReadWriteInOutInterrupt() function to the interrupt
       
       //Serial communication setup
