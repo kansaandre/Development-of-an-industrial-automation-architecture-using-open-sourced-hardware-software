@@ -1,5 +1,5 @@
 
-//LAST UPDATE (roughly): 11.04.2023 02:10
+//LAST UPDATE (roughly): 11.04.2023 02:31
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -223,6 +223,9 @@
       // As of now we have not hooked up any physical actuators to our Control Layer therefore this remain empty.
       // For this sketch as it is now we can still see actuator signals which is sent to HMI Layer with JSON. There
       // the signals are displayed with plots and graphical interfaces.  
+
+      deserializeJson(JSONBUFFER, LogicForceFreezeReadings_string); // Parse the JSON data string and store it in the JSON document object // Note, it automatically clear memory pool before storing data too.
+      }
 
       flow = "ActuatorWritings";   // Identification tag to flow when entering serial line
       JSONOBJ["CurrentFlow"] = flow;
