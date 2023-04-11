@@ -27,6 +27,8 @@
                 "e0f5a81c29c3c248"
             ]
         },
-        "menu-menu-item-sidebar": true
+        "menu-menu-item-sidebar": true,
+        "menu-deploymenu-item-node": true,
+        "menu-deploymenu-item-full": false
     }
 }

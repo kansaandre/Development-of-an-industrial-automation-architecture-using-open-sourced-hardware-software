@@ -1,5 +1,5 @@
 
-//LAST UPDATE (roughly): 11.04.2023 02:31
+//LAST UPDATE (roughly): 11.04.2023 04:03
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -55,7 +55,7 @@
       uint8_t counter = 0; // Counter used to count how many times sequence has looped
       uint16_t current_time = 0; //ms Used to save time from millis() function
       String flow = ""; // Variable used to identify string when sent on serial line in JSON format
-      String message1, message2, SensorDataReading_string, LogicForceFreezeReadings_string; // Used to retrive, identify and separate data from HMI layer to Control Layer
+      String SensorDataReading_string, LogicForceFreezeReadings_string; // Used to retrive, identify and separate data from HMI layer to Control Layer
      
     // JSON
       String JSONSTRING = ""; // Declare a JSON string to be able to commuicate JSON data out from the Control Layer to HMI Layer
@@ -78,7 +78,7 @@
 
 //-------------------------------------------------------------------------------------------------------------------//
 //READ WRITE INPUT OUTPUT INTO JSON OBJECT + JSON SETUP // Functions used for ReadWriteInOutInterrupt (Interrupt loop)
-    StaticJsonDocument<800> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
+    StaticJsonDocument<500> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
     JsonObject JSONOBJ = JSONBUFFER.to<JsonObject>(); // Convert to JsonObject to store key-value pairs because it makes it easy to access and modify the individual values using the corresponding keys.
     JsonObject JSONOBJ_LastValid; // Use to temporary store HMI Layer data "Logic force & freeze readings", fig 10 thesis. Used in case of commuication error.                    
 
@@ -119,34 +119,56 @@
       Serial.println(JSONSTRING); // Print JSON string to serial monitor with Serial.println - Sending data over serial line to Node-RED
     }
 
-    void readSerialData() { // Read serial data from Node-Red, consists of multiple msg.payloads and need to be separated. 
+   // void readSerialData() { // Read serial data from Node-Red, consists of multiple msg.payloads and need to be separated. 
   
-      if (Serial.available()) {
-        while (Serial.available()) {
-          char c = (char)Serial.read();
-          JSONSTRING += c;
-        }
-    
-      // Separate the JSON messages by a newline character (We are reading in LogicForceFreezeReadings and SensorDataReadings at the same time due to simulating process in Node-RED as well)
-      uint16_t separatorIndex = JSONSTRING.indexOf('\n');
-      message1 = JSONSTRING.substring(0, separatorIndex);
-      message2 = JSONSTRING.substring(separatorIndex + 1);
+//      for (uint8_t i = 0; i < 2; i++) {
+//        if (Serial.available()) {
+//          while (Serial.available()) {
+//            char c = (char)Serial.read();
+//            JSONSTRING += c;
+//          }
+//        }
+//
+//        if (JSONSTRING.indexOf("\"CurrentFlow\":\"SensorDataReading\"") != -1) {
+//        SensorDataReading_string = JSONSTRING;
+//        }
+//        else {
+//        LogicForceFreezeReadings_string = JSONSTRING;
+//        }
+//      }
+//    }
 
-      if (message1.indexOf("SensorDataReading") != -1) {
-        SensorDataReading_string = message1; 
-        LogicForceFreezeReadings_string = message2;
-        } 
-      else if (message2.indexOf("SensorDataReading") != -1) {
-        SensorDataReading_string = message2; 
-        LogicForceFreezeReadings_string = message1;
+    void readSerialData() {
+    // Wait for data to become available
+    while (Serial.available() < 1) {
+      delay(10);
+    }
+  
+    // Read the incoming data
+    while (Serial.available()) {
+      char c = (char)Serial.read();
+      if (c == '{') {
+        JSONSTRING = ""; // Reset JSONSTRING when a new message starts
+      }
+      JSONSTRING += c;
+  
+      if (c == '}') {
+        if (JSONSTRING.indexOf("\"CurrentFlow\":\"SensorDataReading\"") != -1) {
+          SensorDataReading_string = JSONSTRING;
+        }
+        else if (JSONSTRING.indexOf("\"CurrentFlow\":\"LogicForceFreezeReadings\"") != -1) {
+          LogicForceFreezeReadings_string = JSONSTRING;
         }
       }
     }
+  }
+      
     
     void LogicForceFreezeReadings() { //"Logic force & freeze readings" HMI Layer to Control Layer, see figure 3 & 10 in thesis document (v.1)
 
       deserializeJson(JSONBUFFER, LogicForceFreezeReadings_string); // Parse the JSON data string and store it in the JSON document object // Note, it automatically clear memory pool before storing data too.
       }                                        // More info --> https://arduinojson.org/v6/api/json/deserializejson/ 
+      
     
     void ErrorHandler() {
 
@@ -217,25 +239,10 @@
               
             }
         }
+     
 
     void ActuatorWritings() {
       // Update JSONOBJ with the variables after the ErrorHandler() function call
-      JSONOBJ["start"] = start;
-      JSONOBJ["stop1"] = stop1;
-      JSONOBJ["stop2"] = stop2;
-      JSONOBJ["heater"] = heater;
-      JSONOBJ["stirrer"] = stirrer;
-      JSONOBJ["valveA"] = valveA;
-      JSONOBJ["valveB"] = valveB;
-      JSONOBJ["valveC"] = valveC;
-      JSONOBJ["s1"] = s1;
-      JSONOBJ["s2"] = s2;
-      JSONOBJ["s3"] = s3;
-      JSONOBJ["temp"] = temp;
-      JSONOBJ["counter"] = counter;
-      JSONOBJ["Flag_LogicForceFreezeReadings_Error"] = Flag_LogicForceFreezeReadings_Error;
-      JSONOBJ["ErrorCount"] = ErrorCount;
-      JSONOBJ["CurrentState"] = state;
     
       flow = "ActuatorWritings"; // Identification tag to flow when entering serial line
       JSONOBJ["CurrentFlow"] = flow;
@@ -347,7 +354,8 @@
       Timer1.attachInterrupt(ReadWriteInOutInterrupt); // Attach the ReadWriteInOutInterrupt() function to the interrupt
       
       //Serial communication setup
-      Serial.begin(38400);
+      Serial.begin(9600); // Set memory buffer in serial communication to 128 bytes. 
+      
 
   }
 

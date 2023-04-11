@@ -162,20 +162,6 @@
         "hidden": false
     },
     {
-        "id": "928dbea4844ffc00",
-        "type": "serial in",
-        "z": "5876467d554e446b",
-        "name": "",
-        "serial": "3c689f194f494e02",
-        "x": 190,
-        "y": 280,
-        "wires": [
-            [
-                "93da4d3a408c1047"
-            ]
-        ]
-    },
-    {
         "id": "93da4d3a408c1047",
         "type": "json",
         "z": "5876467d554e446b",
@@ -187,7 +173,8 @@
         "y": 280,
         "wires": [
             [
-                "9038b48b1d3f91c1"
+                "9038b48b1d3f91c1",
+                "edd1cae3f13fc428"
             ]
         ]
     },
@@ -207,26 +194,7 @@
         "templateScope": "local",
         "className": "",
         "x": 320,
-        "y": 340,
-        "wires": [
-            [
-                "05302a26a7d9a89d"
-            ]
-        ]
-    },
-    {
-        "id": "44260d44f66ec23d",
-        "type": "function",
-        "z": "5876467d554e446b",
-        "name": "function 1",
-        "func": "msg.payload = {\n\n        start: false,\n        stop1: false,\n        stop2: false,\n        heater: null,\n        stirrer: null,\n        valveA: null,\n        valveB: null,\n        valveC: null,\n        s1: null,\n        s2: null,\n        s3: null,\n        temp: null,\n        counter: null,\n        CurrentState: null,\n        overridemode: null,\n        DebugReadLogicForceFreezeError: null,\n        ErrorCount: null,\n        Flag_LogicForceFreezeReadings_Error: null,\n        CurrentFlow: null\n    };\n\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 360,
-        "y": 420,
+        "y": 360,
         "wires": [
             [
                 "05302a26a7d9a89d"
@@ -251,38 +219,11 @@
         "payload": "",
         "payloadType": "str",
         "x": 210,
-        "y": 420,
+        "y": 580,
         "wires": [
             [
-                "44260d44f66ec23d"
+                "6268211513e467dc"
             ]
-        ]
-    },
-    {
-        "id": "c42044015f318f19",
-        "type": "serial out",
-        "z": "5876467d554e446b",
-        "name": "",
-        "serial": "3c689f194f494e02",
-        "x": 2290,
-        "y": 220,
-        "wires": []
-    },
-    {
-        "id": "6268211513e467dc",
-        "type": "function",
-        "z": "5876467d554e446b",
-        "name": "control_layer",
-        "func": "msg.payload = {\n    \"start\": false,\n    \"stop1\": false,\n    \"stop2\": true,\n    \"heater\": true,\n    \"stirrer\": true,\n    \"valveA\": false,\n    \"valveB\": false,\n    \"valveC\": false,\n    \"s1\": false,\n    \"s2\": false,\n    \"s3\": false,\n    \"temp\": 50,\n    \"counter\": null,\n    \"CurrentState\": null,\n    \"overridemode\": true,\n    \"Flag_LogicForceFreezeReadings_Error\": false,\n    \"LFFR_ReadFailCount\": 0,\n    \"DebugReadLogicForceFreeze\": \"Ok\"\n\n};\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 430,
-        "y": 500,
-        "wires": [
-            []
         ]
     },
     {
@@ -297,7 +238,7 @@
         "finalize": "",
         "libs": [],
         "x": 420,
-        "y": 580,
+        "y": 740,
         "wires": [
             []
         ]
@@ -345,13 +286,13 @@
         "once": false,
         "onceDelay": 0.1,
         "topic": "",
-        "payload": "",
+        "payload": "{\"start\":false,\"stop1\":false,\"stop2\":true,\"heater\":true,\"stirrer\":true,\"valveA\":false,\"valveB\":false,\"valveC\":false,\"s1\":false,\"s2\":false,\"s3\":false,\"temp\":50,\"counter\":null,\"CurrentState\":null,\"overridemode\":true,\"Flag_LogicForceFreezeReadings_Error\":false,\"LFFR_ReadFailCount\":0,\"DebugReadLogicForceFreeze\":\"Ok\",\"CurrentFlow\":\"SensorDataReading\"}",
         "payloadType": "str",
-        "x": 210,
-        "y": 500,
+        "x": 1610,
+        "y": 560,
         "wires": [
             [
-                "6268211513e467dc"
+                "d2371909716289e8"
             ]
         ]
     },
@@ -373,7 +314,7 @@
         "payload": "",
         "payloadType": "str",
         "x": 210,
-        "y": 580,
+        "y": 740,
         "wires": [
             [
                 "dfc34c6df10bd3dc"
@@ -427,7 +368,7 @@
         "to": "",
         "reg": false,
         "x": 530,
-        "y": 340,
+        "y": 360,
         "wires": [
             [
                 "9ab4c027559a05c0"
@@ -473,11 +414,11 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 1620,
+        "x": 1600,
         "y": 280,
         "wires": [
             [
-                "bdf913ab472151cf"
+                "1658e71e4a2575d6"
             ]
         ]
     },
@@ -486,7 +427,7 @@
         "type": "function",
         "z": "5876467d554e446b",
         "name": "selector ",
-        "func": "if (msg.payload.CurrentFlow === \"SensorLogicDataWritings\") {\n    node.send([null, msg]);//send msg out outlet \"ActuatorWritings\"\n}\n\nelse if (msg.payload.CurrentFlow === \"ActuatorWritings\") {\n    node.send([msg, null]); //send msg out outlet \"SensorLogicDataWritings\"\n\n}\n\nreturn null;",
+        "func": "if (msg.payload.CurrentFlow === \"SensorLogicDataWritings\") {\n    node.send([null, msg]);//send msg out outlet \"SensorLogicDataWritings\"\n}\n\nelse if (msg.payload.CurrentFlow === \"ActuatorWritings\") {\n    node.send([msg, null]); //send msg out outlet \"ActuatorWritings\"\n\n}\n\nreturn null;",
         "outputs": 2,
         "noerr": 0,
         "initialize": "",
@@ -545,46 +486,47 @@
         "y": 220,
         "wires": [
             [
-                "b802c9b7f2fcdb91",
-                "02e3bbc7b5ee9f19"
+                "0c1f88fea025a442"
             ]
         ]
     },
     {
-        "id": "bdf913ab472151cf",
-        "type": "json",
+        "id": "6e82086cc00b3c8e",
+        "type": "comment",
+        "z": "5876467d554e446b",
+        "name": "ActuatorWritings",
+        "info": "",
+        "x": 620,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "928dbea4844ffc00",
+        "type": "serial in",
         "z": "5876467d554e446b",
         "name": "",
-        "property": "payload",
-        "action": "",
-        "pretty": false,
-        "x": 1850,
+        "serial": "3c689f194f494e02",
+        "x": 190,
         "y": 280,
         "wires": [
             [
-                "b2c6b337dae0ee5d"
+                "93da4d3a408c1047",
+                "2b19a76ba82e02e0"
             ]
         ]
     },
     {
-        "id": "b802c9b7f2fcdb91",
-        "type": "json",
+        "id": "c42044015f318f19",
+        "type": "serial out",
         "z": "5876467d554e446b",
         "name": "",
-        "property": "payload",
-        "action": "",
-        "pretty": false,
-        "x": 1850,
+        "serial": "3c689f194f494e02",
+        "x": 2290,
         "y": 220,
-        "wires": [
-            [
-                "b2c6b337dae0ee5d",
-                "fac4009bcecb9008"
-            ]
-        ]
+        "wires": []
     },
     {
-        "id": "b2c6b337dae0ee5d",
+        "id": "a24827b7f41153d3",
         "type": "join",
         "z": "5876467d554e446b",
         "name": "",
@@ -603,17 +545,137 @@
         "reduceInit": "",
         "reduceInitType": "",
         "reduceFixup": "",
-        "x": 2050,
+        "x": 1970,
         "y": 220,
         "wires": [
             [
-                "c42044015f318f19",
-                "1b69257263789c56"
+                "b77cd56a5f5792c1",
+                "7d151f228e82bc83"
             ]
         ]
     },
     {
-        "id": "02e3bbc7b5ee9f19",
+        "id": "6268211513e467dc",
+        "type": "function",
+        "z": "5876467d554e446b",
+        "name": "control_layer",
+        "func": "msg.payload = {\n    \"start\": false,\n    \"stop1\": false,\n    \"stop2\": true,\n    \"heater\": true,\n    \"stirrer\": true,\n    \"valveA\": false,\n    \"valveB\": false,\n    \"valveC\": false,\n    \"s1\": false,\n    \"s2\": false,\n    \"s3\": false,\n    \"temp\": 50,\n    \"counter\": null,\n    \"CurrentState\": null,\n    \"overridemode\": true,\n    \"Flag_LogicForceFreezeReadings_Error\": false,\n    \"LFFR_ReadFailCount\": 0,\n    \"DebugReadLogicForceFreeze\": \"Ok\",\n    \"CurrentFlow\" : null\n};\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 370,
+        "y": 580,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "0c1f88fea025a442",
+        "type": "json",
+        "z": "5876467d554e446b",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 1770,
+        "y": 220,
+        "wires": [
+            [
+                "a24827b7f41153d3"
+            ]
+        ]
+    },
+    {
+        "id": "1658e71e4a2575d6",
+        "type": "json",
+        "z": "5876467d554e446b",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 1830,
+        "y": 260,
+        "wires": [
+            [
+                "a24827b7f41153d3"
+            ]
+        ]
+    },
+    {
+        "id": "05918c46a231806b",
+        "type": "inject",
+        "z": "5876467d554e446b",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "{\"start\":false,\"stop1\":false,\"stop2\":true,\"heater\":true,\"stirrer\":true,\"valveA\":false,\"valveB\":false,\"valveC\":false,\"s1\":false,\"s2\":false,\"s3\":false,\"temp\":50,\"counter\":null,\"CurrentState\":null,\"overridemode\":true,\"Flag_LogicForceFreezeReadings_Error\":false,\"LFFR_ReadFailCount\":0,\"DebugReadLogicForceFreeze\":\"Ok\",\"CurrentFlow\":\"LogicForceFreezeReadings\"}",
+        "payloadType": "str",
+        "x": 1610,
+        "y": 500,
+        "wires": [
+            [
+                "d2371909716289e8"
+            ]
+        ]
+    },
+    {
+        "id": "d2371909716289e8",
+        "type": "join",
+        "z": "5876467d554e446b",
+        "name": "",
+        "mode": "custom",
+        "build": "string",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "accumulate": false,
+        "timeout": "",
+        "count": "2",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 1770,
+        "y": 520,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "b77cd56a5f5792c1",
+        "type": "split",
+        "z": "5876467d554e446b",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "x": 2110,
+        "y": 220,
+        "wires": [
+            [
+                "c42044015f318f19",
+                "50520f0dbff36069"
+            ]
+        ]
+    },
+    {
+        "id": "2b19a76ba82e02e0",
         "type": "debug",
         "z": "5876467d554e446b",
         "name": "debug 1",
@@ -624,12 +686,12 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1420,
-        "y": 140,
+        "x": 420,
+        "y": 180,
         "wires": []
     },
     {
-        "id": "fac4009bcecb9008",
+        "id": "edd1cae3f13fc428",
         "type": "debug",
         "z": "5876467d554e446b",
         "name": "debug 2",
@@ -640,12 +702,12 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 2140,
-        "y": 100,
+        "x": 520,
+        "y": 220,
         "wires": []
     },
     {
-        "id": "1b69257263789c56",
+        "id": "7d151f228e82bc83",
         "type": "debug",
         "z": "5876467d554e446b",
         "name": "debug 3",
@@ -656,18 +718,24 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 2320,
-        "y": 140,
+        "x": 2060,
+        "y": 160,
         "wires": []
     },
     {
-        "id": "6e82086cc00b3c8e",
-        "type": "comment",
+        "id": "50520f0dbff36069",
+        "type": "debug",
         "z": "5876467d554e446b",
-        "name": "ActuatorWritings",
-        "info": "",
-        "x": 640,
-        "y": 220,
+        "name": "debug 4",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 2260,
+        "y": 160,
         "wires": []
     }
 ]
