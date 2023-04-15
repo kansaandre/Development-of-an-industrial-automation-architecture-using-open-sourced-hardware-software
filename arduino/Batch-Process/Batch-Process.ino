@@ -1,5 +1,5 @@
 
-//LAST UPDATE (roughly): 11.04.2023 04:03
+//LAST UPDATE (roughly): 15.04.2023 19:50
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -119,24 +119,6 @@
       Serial.println(JSONSTRING); // Print JSON string to serial monitor with Serial.println - Sending data over serial line to Node-RED
     }
 
-   // void readSerialData() { // Read serial data from Node-Red, consists of multiple msg.payloads and need to be separated. 
-  
-//      for (uint8_t i = 0; i < 2; i++) {
-//        if (Serial.available()) {
-//          while (Serial.available()) {
-//            char c = (char)Serial.read();
-//            JSONSTRING += c;
-//          }
-//        }
-//
-//        if (JSONSTRING.indexOf("\"CurrentFlow\":\"SensorDataReading\"") != -1) {
-//        SensorDataReading_string = JSONSTRING;
-//        }
-//        else {
-//        LogicForceFreezeReadings_string = JSONSTRING;
-//        }
-//      }
-//    }
 
     void readSerialData() {
     // Wait for data to become available
@@ -350,7 +332,7 @@
     void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset
 
     //Timer setup
-      Timer1.initialize(10000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
+      Timer1.initialize(20000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
       Timer1.attachInterrupt(ReadWriteInOutInterrupt); // Attach the ReadWriteInOutInterrupt() function to the interrupt
       
       //Serial communication setup
