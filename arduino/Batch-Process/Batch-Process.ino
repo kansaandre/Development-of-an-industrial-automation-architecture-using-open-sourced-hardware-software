@@ -150,7 +150,10 @@
       }
 
       deserializeJson(JSONBUFFER, LogicForceFreezeReadings_string); // Parse the JSON data string and store it in the JSON document object // Note, it automatically clear memory pool before storing data too.
-    }                                                               // More info --> https://arduinojson.org/v6/api/json/deserializejson/ 
+                                                                    // More info --> https://arduinojson.org/v6/api/json/deserializejson/ 
+      Serial.println(LogicForceFreezeReadings_string);
+    }                                                              
+    
       
 //------------------
     
@@ -340,13 +343,13 @@
 
       LogicForceFreezeReadings(); // Read in "Logic force & freeze readings@ from the HMI Layer to the Control Layer. Modified data from operators/engineers (freeze & force).
 
-      ErrorHandlerLogic(); // Error handler - In here we set variables in the Control Layer equal to the "new input" from HMI Layer = LogicForceFreezeReadings, in case of error values from HMI are frozen until 4th interrupt or error goes away. 
+      //ErrorHandlerLogic(); // Error handler - In here we set variables in the Control Layer equal to the "new input" from HMI Layer = LogicForceFreezeReadings, in case of error values from HMI are frozen until 4th interrupt or error goes away. 
 
-      ActuatorWritings(); // Write out "Actuator writings" from Control Layer to the Process Layer. See figure 10. 
+      //ActuatorWritings(); // Write out "Actuator writings" from Control Layer to the Process Layer. See figure 10. 
 
-      SensorDataReadings(); // Read in new "Sensor data readings" from Process Layer to Control Layer (see figure 10. in thesis document)
+      //SensorDataReadings(); // Read in new "Sensor data readings" from Process Layer to Control Layer (see figure 10. in thesis document)
 
-      ErrorHandlerReadings(); 
+      //ErrorHandlerReadings(); 
     }
 
 //-------------------------------------------------------------------------------------------------------------------//
