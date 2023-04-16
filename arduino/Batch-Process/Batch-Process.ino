@@ -30,6 +30,8 @@
       //Keep in mind that the TimerOne library is designed for AVR-based microcontrollers, and it may not work with other architectures like ARM or ESP. 
       //If you're working with a different microcontroller, you may need to find a library that's compatible with your specific hardware or use the built-in timer functionalities of that microcontroller.
     //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+//-------------------------------------------------------------------------------------------------------------------//
       
   // Global variable decleration with their normal default value
     
@@ -81,10 +83,15 @@
       states state = ready; // Default/inital state   
 
 //-------------------------------------------------------------------------------------------------------------------//
+
+// FUNCTION SETUPS AND JSON CREATION
+
 //READ WRITE INPUT OUTPUT INTO JSON OBJECT + JSON SETUP // Functions used for ReadWriteInOutInterrupt (Interrupt loop)
     StaticJsonDocument<500> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
     JsonObject JSONOBJ = JSONBUFFER.to<JsonObject>(); // Convert to JsonObject to store key-value pairs because it makes it easy to access and modify the individual values using the corresponding keys.
     JsonObject JSONOBJ_LastValid; // Use to temporary store HMI Layer data "Logic force & freeze readings", fig 10 thesis. Used in case of commuication error.                    
+
+//------------------
 
     void WriteInLogicVariables(){ // Add our global variables to the JSON document/buffer "JSON" in figure 10. Convert data to JSON. 
                                   // This will update the "fresh" variables from the "Controll Process Logic Loop" into our JSONBUFFER. 
@@ -111,6 +118,8 @@
         JSONOBJ["Flag_LogicForceFreezeReadings_Error"] = Flag_LogicForceFreezeReadings_Error;  
         JSONOBJ["ErrorCount"] = ErrorCount; 
     }
+
+//------------------
     
     void SensorLogicDataWritings(){ //"Sensor & Logic data writing" Control Layer to HMI Layer, see figure 3 & 10 in thesis document (v.1)
 
@@ -143,6 +152,8 @@
       deserializeJson(JSONBUFFER, LogicForceFreezeReadings_string); // Parse the JSON data string and store it in the JSON document object // Note, it automatically clear memory pool before storing data too.
     }                                                               // More info --> https://arduinojson.org/v6/api/json/deserializejson/ 
       
+//------------------
+    
     void ErrorHandlerLogic() {
 
     //DESERIALIZATION ERROR - tells if the deserialization of our JSON object stored in document is able to deserialize or not and sent correctly to the HMI layer
@@ -215,6 +226,8 @@
       }
     }
 
+//------------------
+
     void ActuatorWritings() {
       // Update JSONOBJ with the variables after the ErrorHandler() function call
     
@@ -227,6 +240,8 @@
       serializeJson(JSONBUFFER, JSONSTRING); // Function to convert data to JSON format string.
       Serial.println(JSONSTRING); // Print JSON string to serial monitor with Serial.println - Sending data over serial line to Node-RED
     }
+
+//------------------
 
     void SensorDataReadings(){ //"Sensor data readings" Process Layer to Control Layer, see figure 3 & 10 in thesis document.
     // start = digitalRead()
@@ -247,6 +262,8 @@
          
       deserializeJson(JSONBUFFER, SensorDataReadings_string); // Parse the JSON data string and store it in the JSON document object // Note, it automatically clear memory pool before storing data too.
     }                                                      // More info --> https://arduinojson.org/v6/api/json/deserializejson/ 
+
+//------------------
 
     void ErrorHandlerReadings() {
 
@@ -311,7 +328,8 @@
         ErrorCount = 0; // Reset error counter 
       }
     }
-    
+
+//-------------------------------------------------------------------------------------------------------------------//
       
   //Read/Write Time-Interrupt Loop
     void ReadWriteInOutInterrupt() { 
@@ -331,6 +349,7 @@
       ErrorHandlerReadings(); 
     }
 
+//-------------------------------------------------------------------------------------------------------------------//
 
   //Control Process Logic Loop (see Figure 10. in thesis document)
    
