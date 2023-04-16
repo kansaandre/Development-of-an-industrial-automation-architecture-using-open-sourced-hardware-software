@@ -1,5 +1,5 @@
 
-//LAST UPDATE (roughly): 16.04.2023 16:20
+//LAST UPDATE (roughly): 16.04.2023 17:00
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -56,7 +56,7 @@
     // Program Variables (program variables)
       uint8_t counter = 0; // Counter used to count how many times sequence has looped
       uint16_t current_time = 0; //ms Used to save time from millis() function
-      String flow; // Variable used to identify string when sent on serial line in JSON format
+      String flow = ""; // Variable used to identify string when sent on serial line in JSON format
       boolean overridemode; // Set in the ui when operators/engineers override values manually
       String SensorDataReadings_string, LogicForceFreezeReadings_string; // Used to retrive, identify and separate data from HMI layer to Control Layer
       String InputString; // Where we store serial data
@@ -197,7 +197,7 @@
         counter = JSONOBJ_LastValid["counter"];
         state = JSONOBJ_LastValid["CurrentState"];
         overridemode = JSONOBJ_LastValid["overridemode"];
-        flow = JSONOBJ_LastValid["CurrentFlow"];
+        flow = JSONOBJ_LastValid["CurrentFlow"].as<String>();;
         //Flag_LogicForceFreezeReadings_Error = JSONOBJ_LastValid["Flag_LogicForceFreezeReadings_Error"];  //Set elsewhere
         ErrorCount = ErrorCount + 1; // Increment of readfailure of "Logic force & freeze reading" (fig 10. thesis) from HMI Layer. At =3 HMI freeze/force data will be dropped and replaced by raw sensor data.
 
@@ -220,7 +220,7 @@
         counter = JSONOBJ["counter"];
         state = JSONOBJ["CurrentState"];
         overridemode = JSONOBJ["overridemode"];
-        flow = JSONOBJ["CurrentFlow"];          
+        flow = JSONOBJ["CurrentFlow"].as<String>();;          
         //Flag_LogicForceFreezeReadings_Error = JSONOBJ["Flag_LogicForceFreezeReadings_Error"];
         ErrorCount = 0; // Reset error counter 
       }
@@ -300,7 +300,7 @@
         counter = JSONOBJ_LastValid["counter"];
         state = JSONOBJ_LastValid["CurrentState"];
         overridemode = JSONOBJ_LastValid["overridemode"];
-        flow = JSONOBJ_LastValid["CurrentFlow"];
+        flow = JSONOBJ_LastValid["CurrentFlow"].as<String>();
         //Flag_LogicForceFreezeReadings_Error = JSONOBJ_LastValid["Flag_LogicForceFreezeReadings_Error"];  //Set elsewhere
         ErrorCount = ErrorCount + 1; // Increment of readfailure of "Logic force & freeze reading" (fig 10. thesis) from HMI Layer. At =3 HMI freeze/force data will be dropped and replaced by raw sensor data.
 
@@ -323,7 +323,7 @@
         counter = JSONOBJ["counter"];
         state = JSONOBJ["CurrentState"];
         overridemode = JSONOBJ["overridemode"];
-        flow = JSONOBJ["CurrentFlow"];          
+        flow = JSONOBJ["CurrentFlow"].as<String>();          
         //Flag_LogicForceFreezeReadings_Error = JSONOBJ["Flag_LogicForceFreezeReadings_Error"];
         ErrorCount = 0; // Reset error counter 
       }
@@ -411,7 +411,8 @@
             state = fill_A; // Restart loop/program moving back to fill_A state given conditions above are met
           }
        }
-
+    }
+    
     void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset
 
     //Timer setup
@@ -421,7 +422,7 @@
       //Serial communication setup
       Serial.begin(9600); // Set memory buffer in serial communication to 1024 bytes. Serial time stored = (1024 * 10) / 9600 = 1.0667 seconds.
  
-  }
+    }
 
     
 
