@@ -1,5 +1,5 @@
 
-//LAST UPDATE (roughly): 16.04.2023 17:00
+//LAST UPDATE (roughly): 16.04.2023 20:40
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -87,9 +87,11 @@
 // FUNCTION SETUPS AND JSON CREATION
 
 //READ WRITE INPUT OUTPUT INTO JSON OBJECT + JSON SETUP // Functions used for ReadWriteInOutInterrupt (Interrupt loop)
-    StaticJsonDocument<500> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
+    StaticJsonDocument<200> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
     JsonObject JSONOBJ = JSONBUFFER.to<JsonObject>(); // Convert to JsonObject to store key-value pairs because it makes it easy to access and modify the individual values using the corresponding keys.
-    JsonObject JSONOBJ_LastValid; // Use to temporary store HMI Layer data "Logic force & freeze readings", fig 10 thesis. Used in case of commuication error.                    
+    
+    StaticJsonDocument<200> JSONBUFFER_LastValid; //  <bytes data> of SRAM used to store our last valid object 
+    JsonObject JSONOBJ_LastValid = JSONBUFFER_LastValid.to<JsonObject>(); // Use to temporary store HMI Layer data "Logic force & freeze readings", fig 10 thesis. Used in case of commuication error.                    
 
 //------------------
 
@@ -140,18 +142,22 @@
       if (Serial.available() > 0) {
         InputString = ""; // clear variable, make avalible for new data
         NumChars = Serial.available(); // How many bytes are on our serial line?
-
+        delay(300); //Wait until all data recieved, estimated wait time found by (buffer size * 10)/baudrate = 266 ms for our setup (v.1).
+        
         for (int i = 0; i < NumChars; i++) {
           InputString += (char)Serial.read();
         }
-          if (InputString.indexOf("\"CurrentFlow\":\"LogicForceFreezeReadings\"") != -1) {
-            LogicForceFreezeReadings_string = InputString;
+          //if (InputString.indexOf("\"CurrentFlow\":\"LogicForceFreezeReadings\"") != -1) {
           }
-      }
+        LogicForceFreezeReadings_string = InputString;
+
+      
 
       deserializeJson(JSONBUFFER, LogicForceFreezeReadings_string); // Parse the JSON data string and store it in the JSON document object // Note, it automatically clear memory pool before storing data too.
                                                                     // More info --> https://arduinojson.org/v6/api/json/deserializejson/ 
       Serial.println(LogicForceFreezeReadings_string);
+      delay(500);
+      Serial.println(NumChars);
     }                                                              
     
       
@@ -164,70 +170,70 @@
         
         JSONOBJ["DebugReadLogicForceFreezeError"] = error.c_str(); // Convert error text to string, will be sent to HMI Layer in next interrupt call. Documentation in hyperlink found in line above. 
 
-      if (error != DeserializationError::Ok){
-        Flag_LogicForceFreezeReadings_Error = true; // Set a flag true = BAD read of Logic force & freeze reading (fig 10. thesis)
-      }
-      else if (error == DeserializationError::Ok){
-        Flag_LogicForceFreezeReadings_Error = false; // set flag false = GOOD read of Logic force & freeze reading (fig 10. thesis)
-      }
-
-      if (error == DeserializationError::Ok) {
-
-          JSONOBJ_LastValid.set(JSONOBJ); // Here we store last valid HMI read in case of commuication error reading from HMI Layer "Logic force & freeze readings", see figure 10. 
-                                          // We will use this temporary storage of last valid read from the HMI Layer to keep values used in the "Control Process Logic Loop" frozen
-                                          // for MAXIMUM 3 interrupt function cycle calls. This will give the architecture time to be able to read "Logic force & freeze readings" correctly 
-                                          // and updating the values for the main program instead of insantly use Sensor values directly which effectively overwrite possible forced/freezed 
-                                          // values set by the operators which can trip the plant depending on what really is frozen and why. If after 3 interrupt function calls the values
-                                          // received is still not able to be read in by function LogicForceFreezeReadings() we will let the sensors overwrite the JSON Object letting values
-                                          // be used in the main control program and the Control Layer running the plant "blind" solely on Sensor input and Logic until HMI Layer commuication 
-                                          // can be achieved again. 
-      }
- 
-      if ((error != DeserializationError::Ok) and (ErrorCount < 3)) {
-          
-        start = JSONOBJ_LastValid["start"];
-        stop1 = JSONOBJ_LastValid["stop1"];
-        stop2 = JSONOBJ_LastValid["stop2"];
-        heater = JSONOBJ_LastValid["heater"];
-        stirrer = JSONOBJ_LastValid["stirrer"];
-        valveA = JSONOBJ_LastValid["valveA"];
-        valveB = JSONOBJ_LastValid["valveB"];
-        valveC = JSONOBJ_LastValid["valveC"];
-        s1 = JSONOBJ_LastValid["s1"];
-        s2 = JSONOBJ_LastValid["s2"];
-        s3 = JSONOBJ_LastValid["s3"];
-        temp = JSONOBJ_LastValid["temp"];
-        counter = JSONOBJ_LastValid["counter"];
-        state = JSONOBJ_LastValid["CurrentState"];
-        overridemode = JSONOBJ_LastValid["overridemode"];
-        flow = JSONOBJ_LastValid["CurrentFlow"].as<String>();;
-        //Flag_LogicForceFreezeReadings_Error = JSONOBJ_LastValid["Flag_LogicForceFreezeReadings_Error"];  //Set elsewhere
-        ErrorCount = ErrorCount + 1; // Increment of readfailure of "Logic force & freeze reading" (fig 10. thesis) from HMI Layer. At =3 HMI freeze/force data will be dropped and replaced by raw sensor data.
-
-      }
+        if (error != DeserializationError::Ok){
+          Flag_LogicForceFreezeReadings_Error = true; // Set a flag true = BAD read of Logic force & freeze reading (fig 10. thesis)
+        }
+        else if (error == DeserializationError::Ok){
+          Flag_LogicForceFreezeReadings_Error = false; // set flag false = GOOD read of Logic force & freeze reading (fig 10. thesis)
+        }
+  
+        if (error == DeserializationError::Ok) {
+  
+            JSONOBJ_LastValid.set(JSONOBJ); // Here we store last valid HMI read in case of commuication error reading from HMI Layer "Logic force & freeze readings", see figure 10. 
+                                            // We will use this temporary storage of last valid read from the HMI Layer to keep values used in the "Control Process Logic Loop" frozen
+                                            // for MAXIMUM 3 interrupt function cycle calls. This will give the architecture time to be able to read "Logic force & freeze readings" correctly 
+                                            // and updating the values for the main program instead of insantly use Sensor values directly which effectively overwrite possible forced/freezed 
+                                            // values set by the operators which can trip the plant depending on what really is frozen and why. If after 3 interrupt function calls the values
+                                            // received is still not able to be read in by function LogicForceFreezeReadings() we will let the sensors overwrite the JSON Object letting values
+                                            // be used in the main control program and the Control Layer running the plant "blind" solely on Sensor input and Logic until HMI Layer commuication 
+                                            // can be achieved again. 
+        }
+   
+        if ((error != DeserializationError::Ok) and (ErrorCount < 3)) {
             
-      else if ((error == DeserializationError::Ok) or (ErrorCount >= 3)){ // Read comment about this else if in "JSONOBJ_LastValid.set(JSONOBJ);" line.
-        
-        start = JSONOBJ["start"];
-        stop1 = JSONOBJ["stop1"];
-        stop2 = JSONOBJ["stop2"];
-        heater = JSONOBJ["heater"];
-        stirrer = JSONOBJ["stirrer"];
-        valveA = JSONOBJ["valveA"];
-        valveB = JSONOBJ["valveB"];
-        valveC = JSONOBJ["valveC"];
-        s1 = JSONOBJ["s1"];
-        s2 = JSONOBJ["s2"];
-        s3 = JSONOBJ["s3"];
-        temp = JSONOBJ["temp"];
-        counter = JSONOBJ["counter"];
-        state = JSONOBJ["CurrentState"];
-        overridemode = JSONOBJ["overridemode"];
-        flow = JSONOBJ["CurrentFlow"].as<String>();;          
-        //Flag_LogicForceFreezeReadings_Error = JSONOBJ["Flag_LogicForceFreezeReadings_Error"];
-        ErrorCount = 0; // Reset error counter 
+          start = JSONOBJ_LastValid["start"];
+          stop1 = JSONOBJ_LastValid["stop1"];
+          stop2 = JSONOBJ_LastValid["stop2"];
+          heater = JSONOBJ_LastValid["heater"];
+          stirrer = JSONOBJ_LastValid["stirrer"];
+          valveA = JSONOBJ_LastValid["valveA"];
+          valveB = JSONOBJ_LastValid["valveB"];
+          valveC = JSONOBJ_LastValid["valveC"];
+          s1 = JSONOBJ_LastValid["s1"];
+          s2 = JSONOBJ_LastValid["s2"];
+          s3 = JSONOBJ_LastValid["s3"];
+          temp = JSONOBJ_LastValid["temp"];
+          counter = JSONOBJ_LastValid["counter"];
+          state = JSONOBJ_LastValid["CurrentState"];
+          overridemode = JSONOBJ_LastValid["overridemode"];
+          flow = JSONOBJ_LastValid["CurrentFlow"].as<String>();;
+          //Flag_LogicForceFreezeReadings_Error = JSONOBJ_LastValid["Flag_LogicForceFreezeReadings_Error"];  //Set elsewhere
+          ErrorCount = ErrorCount + 1; // Increment of readfailure of "Logic force & freeze reading" (fig 10. thesis) from HMI Layer. At =3 HMI freeze/force data will be dropped and replaced by raw sensor data.
+  
+        }
+              
+        else if ((error == DeserializationError::Ok) or (ErrorCount >= 3)){ // Read comment about this else if in "JSONOBJ_LastValid.set(JSONOBJ);" line.
+          
+          start = JSONOBJ["start"];
+          stop1 = JSONOBJ["stop1"];
+          stop2 = JSONOBJ["stop2"];
+          heater = JSONOBJ["heater"];
+          stirrer = JSONOBJ["stirrer"];
+          valveA = JSONOBJ["valveA"];
+          valveB = JSONOBJ["valveB"];
+          valveC = JSONOBJ["valveC"];
+          s1 = JSONOBJ["s1"];
+          s2 = JSONOBJ["s2"];
+          s3 = JSONOBJ["s3"];
+          temp = JSONOBJ["temp"];
+          counter = JSONOBJ["counter"];
+          state = JSONOBJ["CurrentState"];
+          overridemode = JSONOBJ["overridemode"];
+          flow = JSONOBJ["CurrentFlow"].as<String>();;          
+          //Flag_LogicForceFreezeReadings_Error = JSONOBJ["Flag_LogicForceFreezeReadings_Error"];
+          ErrorCount = 0; // Reset error counter 
+        }
       }
-    }
 
 //------------------
 
@@ -423,8 +429,8 @@
       Timer1.attachInterrupt(ReadWriteInOutInterrupt); // Attach the ReadWriteInOutInterrupt() function to the interrupt
       
       //Serial communication setup
-      Serial.begin(9600); // Set memory buffer in serial communication to 1024 bytes. Serial time stored = (1024 * 10) / 9600 = 1.0667 seconds.
- 
+      Serial.setRxBufferSize(256); //Set memory buffer in receiving serial communication to 256 bytes. 
+      Serial.begin(9600); // //9600 baud per seconds (bits per seconds)
     }
 
     
