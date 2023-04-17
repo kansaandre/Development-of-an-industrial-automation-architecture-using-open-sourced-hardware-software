@@ -1,5 +1,5 @@
 
-//LAST UPDATE (roughly): 16.04.2023 20:40
+//LAST UPDATE (roughly): 18.04.2023 00:21
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
   //this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -14,7 +14,7 @@
   #include <ArduinoJson.h>
   #include <TimerOne.h> //NOTE! READ SECTION BELOW:
     //The TimerOne library is an Arduino library specifically designed for AVR-based microcontrollers, 
-    //such as the ATmega328P found in the Arduino Uno. Here's an overview of the TimerOne library and its key features:
+    //such as the ATmega328P found in the Arduino Uno. Here's an overview of the TimerOne library and its key features:w
       //Hardware usage: The library utilizes Timer1, a 16-bit hardware timer present in many AVR microcontrollers. 
         //Timer1 is one of the most versatile timers in these microcontrollers, offering a wide range of functionality 
         //and high-resolution timing. 
@@ -87,10 +87,10 @@
 // FUNCTION SETUPS AND JSON CREATION
 
 //READ WRITE INPUT OUTPUT INTO JSON OBJECT + JSON SETUP // Functions used for ReadWriteInOutInterrupt (Interrupt loop)
-    StaticJsonDocument<200> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
+    StaticJsonDocument<400> JSONBUFFER; // JSON buffer This is a class provided by the ArduinoJson library to create a JSON buffer. A buffer is a memory area that will store the JSON data. <bytes data>
     JsonObject JSONOBJ = JSONBUFFER.to<JsonObject>(); // Convert to JsonObject to store key-value pairs because it makes it easy to access and modify the individual values using the corresponding keys.
     
-    StaticJsonDocument<200> JSONBUFFER_LastValid; //  <bytes data> of SRAM used to store our last valid object 
+    StaticJsonDocument<400> JSONBUFFER_LastValid; //  <bytes data> of SRAM used to store our last valid object 
     JsonObject JSONOBJ_LastValid = JSONBUFFER_LastValid.to<JsonObject>(); // Use to temporary store HMI Layer data "Logic force & freeze readings", fig 10 thesis. Used in case of commuication error.                    
 
 //------------------
@@ -133,6 +133,7 @@
       }
       serializeJson(JSONBUFFER, JSONSTRING); // Function to convert data to JSON format string.
       Serial.println(JSONSTRING); // Print JSON string to serial monitor with Serial.println - Sending data over serial line to Node-RED
+      delay(300);
     }
         
     void LogicForceFreezeReadings() { //"Logic force & freeze readings" HMI Layer to Control Layer, see figure 3 & 10 in thesis document (v.1)
@@ -142,7 +143,7 @@
       if (Serial.available() > 0) {
         InputString = ""; // clear variable, make avalible for new data
         NumChars = Serial.available(); // How many bytes are on our serial line?
-        delay(300); //Wait until all data recieved, estimated wait time found by (buffer size * 10)/baudrate = 266 ms for our setup (v.1).
+        delay(1000); //Wait until all data recieved, estimated wait time found by (buffer size * 10)/baudrate = 266 ms for our setup (v.1).
         
         for (int i = 0; i < NumChars; i++) {
           InputString += (char)Serial.read();
@@ -151,10 +152,8 @@
           }
         LogicForceFreezeReadings_string = InputString;
 
-      
-
-      deserializeJson(JSONBUFFER, LogicForceFreezeReadings_string); // Parse the JSON data string and store it in the JSON document object // Note, it automatically clear memory pool before storing data too.
-                                                                    // More info --> https://arduinojson.org/v6/api/json/deserializejson/ 
+      //deserializeJson(JSONBUFFER, LogicForceFreezeReadings_string); // Parse the JSON data string and store it in the JSON document object // Note, it automatically clear memory pool before storing data too.
+      delay(5000);                                                              // More info --> https://arduinojson.org/v6/api/json/deserializejson/ 
       Serial.println(LogicForceFreezeReadings_string);
       delay(500);
       Serial.println(NumChars);
@@ -429,8 +428,8 @@
       Timer1.attachInterrupt(ReadWriteInOutInterrupt); // Attach the ReadWriteInOutInterrupt() function to the interrupt
       
       //Serial communication setup
-      Serial.setRxBufferSize(256); //Set memory buffer in receiving serial communication to 256 bytes. 
-      Serial.begin(9600); // //9600 baud per seconds (bits per seconds)
+      //Serial.setRxBufferSize(256); //Set memory buffer in receiving serial communication to 256 bytes. NOTE! Unable for my setup, old UNO board I suspect. Therefore I changed the file in the Arduino hardware lib: "HardwareSerial.h". 
+      Serial.begin(38400); // //9600 baud per seconds (bits per seconds)
     }
 
     
