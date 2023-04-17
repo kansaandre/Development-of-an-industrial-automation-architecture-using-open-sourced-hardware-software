@@ -10,7 +10,7 @@
     {
         "id": "3c689f194f494e02",
         "type": "serial-port",
-        "serialport": "/dev/ttyUSB1",
+        "serialport": "/dev/ttyUSB0",
         "serialbaud": "38400",
         "databits": "8",
         "parity": "none",
