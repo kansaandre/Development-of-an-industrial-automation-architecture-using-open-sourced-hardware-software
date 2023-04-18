@@ -1,4 +1,4 @@
-//LAST UPDATE (roughly): 18.04.2023 02:50
+//LAST UPDATE (roughly): 18.04.2023 03:01
 
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
@@ -152,13 +152,9 @@
     //What we actually have added here is visualized in figure 9 in thesis document v1.0.
 
     //Step 1 (see Figure 9. from thesis document v1.0)
-    void ReadLogic(){ //In this function we will update our variables which may have been given new values from the control logic code above.
+    void ReadLogic(StaticJsonDocument<400>& JsonMemory){ //In this function we will update our variables which may have been given new values from the control logic code above.
                       //We write our variables into memory allocated to the StaticJsonDocument where it will be stored ready for transmission.
 
-
-      //Setup of JSON // JSON is used as our commuication data interchange between layers // must be destroyed every interrupt --> https://arduinojson.org/v6/how-to/reuse-a-json-document/
-      StaticJsonDocument<400> JsonMemory; //Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)  
-            
       //Check declaration in top of code for explanation about the variables
       JsonMemory["start"] = start;
       JsonMemory["stop1"] = stop1;
@@ -180,7 +176,7 @@
     }
 
     //Step 2 
-    void SensorLogicDataWrite(){ //Send data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
+    void SensorLogicDataWrite(StaticJsonDocument<400>& JsonMemory){ //Send data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
 
       serializeJson(JsonMemory, jsonstring); //Function that converts JSON object to a string.
       Serial.println(jsonstring); //Function that prints text to the Serial Monitor.
@@ -194,8 +190,12 @@
 //-------------------------------------------------------------------------------------------------------------------//
   //Time Interupt Function // from figure 9. thesis document v1.0 it is called "Read/Write Time-Interrupt Loop"
     void interrupt(){
-     ReadLogic(); // step 1
-     SensorLogicDataWrite(); // step 2
+
+      //Setup of JSON // JSON is used as our commuication data interchange between layers // must be destroyed every interrupt --> https://arduinojson.org/v6/how-to/reuse-a-json-document/
+      StaticJsonDocument<400> JsonMemory; //Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)  
+      
+      ReadLogic(JsonMemory); // step 1
+      SensorLogicDataWrite(JsonMemory); // step 2
     }
   
 
