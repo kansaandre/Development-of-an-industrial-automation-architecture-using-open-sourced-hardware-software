@@ -1,4 +1,4 @@
-//LAST UPDATE (roughly): 18.04.2023 02:22
+//LAST UPDATE (roughly): 18.04.2023 02:50
 
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
@@ -65,7 +65,8 @@
         String jsonstring = ""; //Used to send/recieve JSON as string between layers
    
       // States (program variables)
-        enum states { //Declare our states made direectly from Figure 9. in thesis document. 
+        enum states { //Declare our states made direectly from Figure 9. in thesis document.
+          pause = 0, 
           ready = 1,
           fill_A = 2,
           fill_B = 3,
@@ -150,13 +151,14 @@
     //Here all commuication from control layer aka as here in Arduino with the HMI layer as well as the process layer.
     //What we actually have added here is visualized in figure 9 in thesis document v1.0.
 
-    //Setup of JSON // JSON is used as our commuication data interchange between layers
-    StaticJsonDocument<400> JsonMemory; //Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
-
     //Step 1 (see Figure 9. from thesis document v1.0)
     void ReadLogic(){ //In this function we will update our variables which may have been given new values from the control logic code above.
                       //We write our variables into memory allocated to the StaticJsonDocument where it will be stored ready for transmission.
 
+
+      //Setup of JSON // JSON is used as our commuication data interchange between layers // must be destroyed every interrupt --> https://arduinojson.org/v6/how-to/reuse-a-json-document/
+      StaticJsonDocument<400> JsonMemory; //Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)  
+            
       //Check declaration in top of code for explanation about the variables
       JsonMemory["start"] = start;
       JsonMemory["stop1"] = stop1;
