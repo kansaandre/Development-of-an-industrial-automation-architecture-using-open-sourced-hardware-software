@@ -63,6 +63,9 @@
   
         //JSON declaration direct
         String jsonstring = ""; //Used to send/recieve JSON as string between layers
+        boolean SerialReady = false; //Used for handshake agreement when HMI Layer are to send data to Control Layer.
+                                     //Needed to make sure we are listening on serial port before data the large JSON
+                                     //data string is sent. Can be removed with larger serial reciever buffer....
    
       // States (program variables)
         enum states { //Declare our states made direectly from Figure 9. in thesis document.
@@ -77,8 +80,9 @@
         };
         states state = ready; // Default/inital state
 
-      //Properties only found in the controll layer
-         unsigned long current_time; 
+      //Properties only found in the control layer
+         unsigned long current_time;
+         String payload; 
            
 
 //-------------------------------------------------------------------------------------------------------------------//
@@ -154,10 +158,11 @@
 
     void interrupt(){
 
-      //Setup of JSON // JSON is used as our commuication data interchange between layers // destroyed everytime as recommended by documentation
-      StaticJsonDocument<800> JsonMemory; //Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)  
+      //Setup of JSON // JSON is used as our commuication data interchange between layers // destroyed everytime as recommended by documentation of ArduinoJson.h
+      StaticJsonDocument<400> JsonMemory; //Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
+      StaticJsonDocument<40> JsonSerialReady;  
 
-      //Step 1 (see Figure 9. from thesis document v1.0)
+      //Step 1 - Read In Updated Variables - (see Figure 9. from thesis document v1.0)
       //Here we will update our variables which may have been given new values from the control logic code above.
       //We write our variables into memory allocated to the StaticJsonDocument where it will be stored ready for transmission.
 
@@ -179,14 +184,27 @@
         JsonMemory["flow"] = flow;
         JsonMemory["overridemode"] = overridemode;
         JsonMemory["error"] = error;
-      
 
-      //Step 2 //Send data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
+      //Step 2 - Sensor & Logic data write - Send data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
+
+        flow = "SensorLogicDataWrite; //Identification property in our JSON data // used with figure 9. from thesis document v1.0.
+        JsonMemory["flow"] = flow;
+        
         serializeJson(JsonMemory, jsonstring); //Function that converts JSON object to a string.
         Serial.println(jsonstring); //Function that prints text to the Serial Monitor.
-    }
-    //Step 3
+    
+      //Step 3 - HMI Layer which include the user interface with override functionality - Hosted in Node-RED
 
+      //Step 4 - Logic force & freeze read - Send data from HMI Layer to Control Layer. Here we sending exact same data as in step 2
+            // - but update our variables from the user interface inputs, overwriting data etc.
+        if Serial.available() > 0{
+          payload = Serial.readString();
+          
+          Serial.println(payload);  
+        }
+          
+  
+              
 //-------------------------------------------------------------------------------------------------------------------//
 
   //Setup of interrupt in our timer1 lib as well as serial commuication
