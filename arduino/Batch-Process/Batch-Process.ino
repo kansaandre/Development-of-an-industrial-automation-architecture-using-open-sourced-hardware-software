@@ -1,4 +1,4 @@
-//LAST UPDATE (roughly): 18.04.2023 03:33
+//LAST UPDATE (roughly): 19.04.2023 01:00
 
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
@@ -82,7 +82,8 @@
 
       //Properties only found in the control layer
          unsigned long current_time;
-         String payload; 
+         char c;
+
            
 
 //-------------------------------------------------------------------------------------------------------------------//
@@ -187,22 +188,46 @@
 
       //Step 2 - Sensor & Logic data write - Send data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
 
-        flow = "SensorLogicDataWrite; //Identification property in our JSON data // used with figure 9. from thesis document v1.0.
+        flow = "SensorLogicDataWrite"; //Identification property in our JSON data // used with figure 9. from thesis document v1.0.
         JsonMemory["flow"] = flow;
+        
+        jsonstring = ""; // clear jsonstring 
         
         serializeJson(JsonMemory, jsonstring); //Function that converts JSON object to a string.
         Serial.println(jsonstring); //Function that prints text to the Serial Monitor.
+        
     
       //Step 3 - HMI Layer which include the user interface with override functionality - Hosted in Node-RED
 
       //Step 4 - Logic force & freeze read - Send data from HMI Layer to Control Layer. Here we sending exact same data as in step 2
             // - but update our variables from the user interface inputs, overwriting data etc.
-        if Serial.available() > 0{
-          payload = Serial.readString();
-          
-          Serial.println(payload);  
+
+        flow = "RequestLogicForceFreezeRead";
+        SerialReady = true; //Ready to listen to serial line and read out "LogicForceFreezeRead". Due to size, it must be done directly and we can not "store" it in Serial Buffer (at least for UNO)...
+        JsonSerialReady["flow"] = flow; //Identification property
+        JsonSerialReady["SerialReady"] = SerialReady; //Ready to read serial data sent from HMI Layer (aka Node-RED)
+        
+        jsonstring = ""; // clear jsonstring
+
+        serializeJson(JsonSerialReady,jsonstring);
+        Serial.println(jsonstring);
+
+        jsonstring = ""; // clear jsonstring
+
+        while (Serial.available() > 0){
+
+          c = (char)Serial.read(); // Read one character from the serial buffer
+          jsonstring += c;
         }
-          
+        deserializeJson(JsonMemory, jsonstring);
+        
+        flow = "test"; //Identification property
+        JsonMemory["flow"] = flow;
+
+        serializeJson(JsonMemory, jsonstring);
+        Serial.println(jsonstring);
+      
+    }
   
               
 //-------------------------------------------------------------------------------------------------------------------//
