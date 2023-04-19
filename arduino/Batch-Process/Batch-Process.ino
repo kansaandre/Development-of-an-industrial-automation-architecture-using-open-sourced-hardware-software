@@ -1,5 +1,4 @@
-//LAST UPDATE (roughly): 19.04.2023 01:00
-
+//LAST UPDATE (roughly): 19.04.2023 02:10
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
@@ -161,7 +160,7 @@
 
       //Setup of JSON // JSON is used as our commuication data interchange between layers // destroyed everytime as recommended by documentation of ArduinoJson.h
       StaticJsonDocument<400> JsonMemory; //Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
-      StaticJsonDocument<40> JsonSerialReady;  
+      StaticJsonDocument<100> JsonSerialReady;  
 
       //Step 1 - Read In Updated Variables - (see Figure 9. from thesis document v1.0)
       //Here we will update our variables which may have been given new values from the control logic code above.
@@ -202,24 +201,40 @@
       //Step 4 - Logic force & freeze read - Send data from HMI Layer to Control Layer. Here we sending exact same data as in step 2
             // - but update our variables from the user interface inputs, overwriting data etc.
 
-        flow = "RequestLogicForceFreezeRead";
-        SerialReady = true; //Ready to listen to serial line and read out "LogicForceFreezeRead". Due to size, it must be done directly and we can not "store" it in Serial Buffer (at least for UNO)...
-        JsonSerialReady["flow"] = flow; //Identification property
-        JsonSerialReady["SerialReady"] = SerialReady; //Ready to read serial data sent from HMI Layer (aka Node-RED)
-        
-        jsonstring = ""; // clear jsonstring
+        //Request LogicForceFreezeRead JSON
+          flow = "RequestLogicForceFreezeRead";
+          SerialReady = true; //Ready to listen to serial line and read out "LogicForceFreezeRead". Due to size, it must be done directly and we can not "store" it in Serial Buffer (at least for UNO)...
+          JsonSerialReady["flow"] = flow; //Identification property
+          JsonSerialReady["SerialReady"] = SerialReady; //Ready to read serial data sent from HMI Layer (aka Node-RED)
+          
+          jsonstring = ""; // clear jsonstring
+  
+          serializeJson(JsonSerialReady,jsonstring);
+          Serial.println(jsonstring);
+          
+        //Listen to serial port and read out JSON data from HMI Layer 
+          jsonstring = ""; // clear jsonstring
 
-        serializeJson(JsonSerialReady,jsonstring);
-        Serial.println(jsonstring);
+          while (Serial.available() == 0) {
+            // Do nothing; just wait for data
+          }
+            
+          while (Serial.available() > 0){
+  
+            c = (char)Serial.read(); // Read one character from the serial buffer
+            jsonstring += c;
+          }
+          
+        //Store serial data string in JSON memory // effectively making into json object
+          deserializeJson(JsonMemory, jsonstring);
 
-        jsonstring = ""; // clear jsonstring
+        //Close gate stopping serial data from HMI layer to Control Layer 
+          SerialReady = false; //Close gate
+          JsonSerialReady["flow"] = flow; //Identification property
+          JsonSerialReady["SerialReady"] = SerialReady; //Ready to read serial data sent from HMI Layer (aka Node-RED)
 
-        while (Serial.available() > 0){
-
-          c = (char)Serial.read(); // Read one character from the serial buffer
-          jsonstring += c;
-        }
-        deserializeJson(JsonMemory, jsonstring);
+          serializeJson(JsonSerialReady,jsonstring); //Send stop signal to HMI Layer
+          Serial.println(jsonstring); //Send stop signal to HMI Layer
         
         flow = "test"; //Identification property
         JsonMemory["flow"] = flow;
@@ -237,7 +252,7 @@
     void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset
 
       //Timer setup
-        Timer1.initialize(10000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
+        Timer1.initialize(20000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
         Timer1.attachInterrupt(interrupt); // Attach the ReadWriteInOutInterrupt() function to the interrupt
         
       //Serial communication setup
