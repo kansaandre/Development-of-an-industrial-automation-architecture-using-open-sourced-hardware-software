@@ -217,6 +217,7 @@
 
           while (Serial.available() == 0) {
             // Do nothing; just wait for data
+            delay(10);
           }
             
           while (Serial.available() > 0){
@@ -233,14 +234,20 @@
           JsonSerialReady["flow"] = flow; //Identification property
           JsonSerialReady["SerialReady"] = SerialReady; //Ready to read serial data sent from HMI Layer (aka Node-RED)
 
+          jsonstring = ""; // clear jsonstring
+          
           serializeJson(JsonSerialReady,jsonstring); //Send stop signal to HMI Layer
           Serial.println(jsonstring); //Send stop signal to HMI Layer
-        
-        flow = "test"; //Identification property
-        JsonMemory["flow"] = flow;
 
-        serializeJson(JsonMemory, jsonstring);
-        Serial.println(jsonstring);
+        //Test - See what data has been read from HMI Layer and added to our JsonMemory (made to object).
+        
+          flow = "test"; //Identification property
+          JsonMemory["flow"] = flow;
+  
+          jsonstring = ""; // clear jsonstring
+  
+          serializeJson(JsonMemory, jsonstring);
+          Serial.println(jsonstring);
       
     }
   
@@ -257,6 +264,8 @@
         
       //Serial communication setup
         Serial.begin(9600); // //9600 baud per seconds (bits per seconds)
+
+        delay(10000);
     }
 
     

@@ -24,11 +24,16 @@
                 "a2a0b50b49465540",
                 "d5854ef392dd02a6",
                 "e999e721ad1cf0a7",
-                "e0f5a81c29c3c248"
+                "e0f5a81c29c3c248",
+                "54492a7ea6551d29",
+                "c8671b63a9c63ed6",
+                "ea1020a1f8e5bd73",
+                "f76a47b6e1609a8a",
+                "e4ddeb77caef2345"
             ]
         },
         "menu-menu-item-sidebar": true,
-        "menu-deploymenu-item-node": true,
-        "menu-deploymenu-item-full": false
+        "menu-deploymenu-item-node": false,
+        "menu-deploymenu-item-full": true
     }
 }
