@@ -1,4 +1,4 @@
-//LAST UPDATE (roughly): 19.04.2023 02:10
+//LAST UPDATE (roughly): 20.04.2023 01:30
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
@@ -204,12 +204,13 @@
         //Request LogicForceFreezeRead JSON
           flow = "RequestLogicForceFreezeRead";
           SerialReady = true; //Ready to listen to serial line and read out "LogicForceFreezeRead". Due to size, it must be done directly and we can not "store" it in Serial Buffer (at least for UNO)...
+          
           JsonSerialReady["flow"] = flow; //Identification property
           JsonSerialReady["SerialReady"] = SerialReady; //Ready to read serial data sent from HMI Layer (aka Node-RED)
           
           jsonstring = ""; // clear jsonstring
   
-          serializeJson(JsonSerialReady,jsonstring);
+          serializeJson(JsonSerialReady, jsonstring);
           Serial.println(jsonstring);
           
         //Listen to serial port and read out JSON data from HMI Layer 
@@ -230,13 +231,14 @@
           deserializeJson(JsonMemory, jsonstring);
 
         //Close gate stopping serial data from HMI layer to Control Layer 
+          flow = "RequestLogicForceFreezeRead";
           SerialReady = false; //Close gate
           JsonSerialReady["flow"] = flow; //Identification property
           JsonSerialReady["SerialReady"] = SerialReady; //Ready to read serial data sent from HMI Layer (aka Node-RED)
 
           jsonstring = ""; // clear jsonstring
           
-          serializeJson(JsonSerialReady,jsonstring); //Send stop signal to HMI Layer
+          serializeJson(JsonSerialReady, jsonstring); //Send stop signal to HMI Layer
           Serial.println(jsonstring); //Send stop signal to HMI Layer
 
         //Test - See what data has been read from HMI Layer and added to our JsonMemory (made to object).
@@ -265,7 +267,7 @@
       //Serial communication setup
         Serial.begin(9600); // //9600 baud per seconds (bits per seconds)
 
-        delay(10000);
+        delay(5000);
     }
 
     
