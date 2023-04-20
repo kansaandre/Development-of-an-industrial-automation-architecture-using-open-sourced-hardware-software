@@ -1,4 +1,4 @@
-//LAST UPDATE (roughly): 20.04.2023 02:50
+//LAST UPDATE (roughly): 20.04.2023 03:12
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
@@ -165,13 +165,13 @@
       TimeInSequence = TimeRunning - TimeInSequence; // Tracking time in sequence meaning (state != ready)
         
       //Setup of JSON // JSON is used as our commuication data interchange between layers // destroyed everytime as recommended by documentation of ArduinoJson.h
-      StaticJsonDocument<600> JsonMemory; //Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
+      StaticJsonDocument<700> JsonMemory; //Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
       StaticJsonDocument<100> JsonSerialReady;  
 
       //Step 1 - Read In Updated Variables - (see Figure 9. from thesis document v1.0)
       //Here we will update our variables which may have been given new values from the control logic code above.
       //We write our variables into memory allocated to the StaticJsonDocument where it will be stored ready for transmission.
-
+        Serial.println("step1");
         //Check declaration in top of code for explanation about the variables
         JsonMemory["start"] = start;
         JsonMemory["stop1"] = stop1;
@@ -194,7 +194,7 @@
         JsonMemory["TimeInSequence"] = TimeInSequence;
 
       //Step 2 - Sensor & Logic data write - Send data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
-
+       Serial.println("step2");
         flow = "SensorLogicDataWrite"; //Identification property in our JSON data // used with figure 9. from thesis document v1.0.
         JsonMemory["flow"] = flow;
         
@@ -205,10 +205,10 @@
         
     
       //Step 3 - HMI Layer which include the user interface with override functionality - Hosted in Node-RED
-
+       Serial.println("step3");
       //Step 4 - Logic force & freeze read - Send data from HMI Layer to Control Layer. Here we sending exact same data as in step 2
             // - but update our variables from the user interface inputs, overwriting data etc.
-
+       Serial.println("step4");
         //Request LogicForceFreezeRead JSON
           flow = "RequestLogicForceFreezeRead";
           SerialReady = true; //Ready to listen to serial line and read out "LogicForceFreezeRead". Due to size, it must be done directly and we can not "store" it in Serial Buffer (at least for UNO)...
