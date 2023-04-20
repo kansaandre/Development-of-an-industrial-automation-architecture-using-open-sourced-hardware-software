@@ -1,5 +1,5 @@
 
-//LAST UPDATE (roughly): 20.04.2023 01:30
+//LAST UPDATE (roughly): 20.04.2023 23:49
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
@@ -12,26 +12,9 @@
     //AI tools like ChatGPT, aiding coding, architecture design, and hardware selection. 
     //This sets it apart from confidential industrial vendors.
 
-  #include <ArduinoJson.h>
-  #include <TimerOne.h> //NOTE! READ SECTION BELOW:
-    //The TimerOne library is an Arduino library specifically designed for AVR-based microcontrollers, 
-    //such as the ATmega328P found in the Arduino Uno. Here's an overview of the TimerOne library and its key features:w
-      //Hardware usage: The library utilizes Timer1, a 16-bit hardware timer present in many AVR microcontrollers. 
-        //Timer1 is one of the most versatile timers in these microcontrollers, offering a wide range of functionality 
-        //and high-resolution timing. 
-      //Precision: Hardware timers are more precise and have better resolution than software timers. They are based on the microcontroller's internal hardware clock, 
-        //so their accuracy is not affected by other processes or code execution.
-      //Interrupt handling: The library enables you to attach and detach interrupt service routines (ISR) to the timer overflow event. 
-        //This means you can execute specific functions at defined time intervals, which is useful for tasks like periodic data sampling or time-based control.
-      //Timer configuration: TimerOne provides functions to configure the timer's prescaler, allowing you to adjust the timer's resolution and range. 
-        //You can also set the desired timer period directly in microseconds, making it easy to achieve precise timing intervals.
-      //Easy-to-use interface: The TimerOne library offers a simple and intuitive API, making it easy to work with the Timer1 hardware. 
-        //The API includes functions like initialize(), setPeriod(), start(), stop(), resume(), and attachInterrupt().
-    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      //Keep in mind that the TimerOne library is designed for AVR-based microcontrollers, and it may not work with other architectures like ARM or ESP. 
-      //If you're working with a different microcontroller, you may need to find a library that's compatible with your specific hardware or use the built-in timer functionalities of that microcontroller.
-    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+  #include <ArduinoJson.h> //https://arduinojson.org/
+  #include <MsTimer2.h> //https://www.arduino.cc/reference/en/libraries/mstimer2/ // software based interrupt compatible with "all" microcontrollers.
+    
 //-------------------------------------------------------------------------------------------------------------------//
       
   // Global variable decleration with their normal default value
@@ -170,7 +153,7 @@
       TimeRunningJSON = TimeRunning/1000; //s
         
       //Setup of JSON // JSON is used as our commuication data interchange between layers // destroyed everytime as recommended by documentation of ArduinoJson.h
-      StaticJsonDocument<400> JsonMemory; //Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
+      StaticJsonDocument<300> JsonMemory; //Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
       StaticJsonDocument<100> JsonSerialReady;  
 
       //Step 1 - Read In Updated Variables - (see Figure 9. from thesis document v1.0)
@@ -278,9 +261,9 @@
     void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset
 
       //Timer setup
-        Timer1.initialize(20000000); // Set interrupt interval function call to 1 second (1000000 microseconds)
-        Timer1.attachInterrupt(interrupt); // Attach the ReadWriteInOutInterrupt() function to the interrupt
-        
+        MsTimer2::set(20000, interrupt);
+        MsTimer2::start(); // start the timer
+
       //Serial communication setup
         Serial.begin(9600); // //9600 baud per seconds (bits per seconds)
 
