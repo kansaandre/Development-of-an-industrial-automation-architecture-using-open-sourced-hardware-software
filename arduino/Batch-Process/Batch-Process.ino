@@ -1,8 +1,5 @@
-<<<<<<< HEAD
-//LAST UPDATE (roughly): 20.04.2023 03:12
-=======
+
 //LAST UPDATE (roughly): 20.04.2023 01:30
->>>>>>> parent of fab32d6 (Update Batch-Process.ino)
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
@@ -84,12 +81,12 @@
         states state = ready; // Default/inital state
 
       //Properties only found in the control layer
-         unsigned long current_time;
+         unsigned long current_time; //ms
          char c;
-         unsigned long timeout = 1000; // Timeout duration in milliseconds
-         unsigned long startTime = millis(); // Used for serial commuication see step 4.
-         unsigned long TimeRunning = millis()/1000; // Used to remember since program was uploaded and ran as well as tracking time spent in sequence
-         unsigned long TimeInSequence;
+         unsigned long SerialWait; //ms
+         uint16_t TimeOut = 25000; //ms
+         unsigned long TimeInSequence; //ms
+         unsigned long TimeRunning = millis(); //ms
 
 //-------------------------------------------------------------------------------------------------------------------//
   
@@ -102,7 +99,7 @@
         case ready:
           TimeInSequence = 0; // reset sequence time tracker
           if (start == true) {
-            TimeInSequence = millis()/1000; // Start counting time since we entered sequence
+            TimeInSequence = millis(); // Start counting time since we entered sequence
             state = fill_A; // If start button is pressed change state to fill_A
            }
            break; // Break is neccesary to exit the switch statement
@@ -175,7 +172,6 @@
       //Step 1 - Read In Updated Variables - (see Figure 9. from thesis document v1.0)
       //Here we will update our variables which may have been given new values from the control logic code above.
       //We write our variables into memory allocated to the StaticJsonDocument where it will be stored ready for transmission.
-        Serial.println("step1");
         //Check declaration in top of code for explanation about the variables
         JsonMemory["start"] = start;
         JsonMemory["stop1"] = stop1;
@@ -198,7 +194,6 @@
         JsonMemory["TimeInSequence"] = TimeInSequence;
 
       //Step 2 - Sensor & Logic data write - Send data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
-       Serial.println("step2");
         flow = "SensorLogicDataWrite"; //Identification property in our JSON data // used with figure 9. from thesis document v1.0.
         JsonMemory["flow"] = flow;
         
@@ -209,10 +204,9 @@
         
     
       //Step 3 - HMI Layer which include the user interface with override functionality - Hosted in Node-RED
-       Serial.println("step3");
+      
       //Step 4 - Logic force & freeze read - Send data from HMI Layer to Control Layer. Here we sending exact same data as in step 2
-            // - but update our variables from the user interface inputs, overwriting data etc.
-       Serial.println("step4");
+      // - but update our variables from the user interface inputs, overwriting data etc.
         //Request LogicForceFreezeRead JSON
           flow = "RequestLogicForceFreezeRead";
           SerialReady = true; //Ready to listen to serial line and read out "LogicForceFreezeRead". Due to size, it must be done directly and we can not "store" it in Serial Buffer (at least for UNO)...
@@ -225,44 +219,13 @@
           serializeJson(JsonSerialReady, jsonstring);
           Serial.println(jsonstring);
           
-<<<<<<< HEAD
-        // Listen to serial port and read out JSON data from HMI Layer
-          jsonstring = ""; // clear jsonstring
-        
-        // Wait for data or until timeout expires
-          Serial.setTimeout(4000000)
-        
-        // Read data from the serial buffer
-          while (Serial.available() > 0) {
-            c = (char)Serial.read(); // Read one character from the serial buffer
-            jsonstring += c;
-          }
-        
-        // Check if any data was received
-          if (jsonstring.length() > 0) {
-            // Store serial data string in JSON memory, effectively making it into a JSON object
-            deserializeJson(JsonMemory, jsonstring);
-
-            //Test - See what data has been read from HMI Layer and added to our JsonMemory (made to object).        
-              flow = "test"; //Identification property
-              JsonMemory["flow"] = flow;
-      
-              jsonstring = ""; // clear jsonstring
-      
-              serializeJson(JsonMemory, jsonstring);
-              Serial.println(jsonstring);            
-                
-          } else {
-            // Handle the case when no data was received or timeout occurred
-            // You can add error handling or logging here
-          }
-=======
         //Listen to serial port and read out JSON data from HMI Layer 
           jsonstring = ""; // clear jsonstring
+          SerialWait = millis(); // set it to current time
 
-          while (Serial.available() == 0) {
+          while ((Serial.available() == 0) and (millis()-SerialWait < TimeOut)) {
             // Do nothing; just wait for data
-            delay(10);
+            delay(5);
           }
             
           while (Serial.available() > 0){
@@ -271,9 +234,22 @@
             jsonstring += c;
           }
           
-        //Store serial data string in JSON memory // effectively making into json object
-          deserializeJson(JsonMemory, jsonstring);
->>>>>>> parent of fab32d6 (Update Batch-Process.ino)
+          // Check if any data was received
+            if (jsonstring.length() > 0) {
+              // Store serial data string in JSON memory, effectively making it into a JSON object
+              deserializeJson(JsonMemory, jsonstring);
+
+              flow = "test"; //Identification property
+              JsonMemory["flow"] = flow;
+
+              jsonstring = ""; 
+              serializeJson(JsonMemory, jsonstring);
+              Serial.println(jsonstring);
+              
+            } else {
+              // Handle the case when no data was received or timeout occurred
+              // You can add error handling or logging here
+            }
 
         //Close gate stopping serial data from HMI layer to Control Layer 
           flow = "RequestLogicForceFreezeRead";
