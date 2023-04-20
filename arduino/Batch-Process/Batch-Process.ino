@@ -1,4 +1,4 @@
-//LAST UPDATE (roughly): 20.04.2023 01:35
+//LAST UPDATE (roughly): 20.04.2023 02:50
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
@@ -83,7 +83,9 @@
          unsigned long current_time;
          char c;
          unsigned long timeout = 1000; // Timeout duration in milliseconds
-         unsigned long startTime = millis();
+         unsigned long startTime = millis(); // Used for serial commuication see step 4.
+         unsigned long TimeRunning = millis()/1000; // Used to remember since program was uploaded and ran as well as tracking time spent in sequence
+         unsigned long TimeInSequence;
 
 //-------------------------------------------------------------------------------------------------------------------//
   
@@ -94,9 +96,11 @@
       switch (state) {
         
         case ready:
+          TimeInSequence = 0; // reset sequence time tracker
           if (start == true) {
+            TimeInSequence = millis()/1000; // Start counting time since we entered sequence
             state = fill_A; // If start button is pressed change state to fill_A
-             }
+           }
            break; // Break is neccesary to exit the switch statement
 
         case fill_A:
@@ -157,9 +161,11 @@
 
 
     void interrupt(){
-
+      
+      TimeInSequence = TimeRunning - TimeInSequence; // Tracking time in sequence meaning (state != ready)
+        
       //Setup of JSON // JSON is used as our commuication data interchange between layers // destroyed everytime as recommended by documentation of ArduinoJson.h
-      StaticJsonDocument<400> JsonMemory; //Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
+      StaticJsonDocument<600> JsonMemory; //Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
       StaticJsonDocument<100> JsonSerialReady;  
 
       //Step 1 - Read In Updated Variables - (see Figure 9. from thesis document v1.0)
@@ -184,6 +190,8 @@
         JsonMemory["flow"] = flow;
         JsonMemory["overridemode"] = overridemode;
         JsonMemory["error"] = error;
+        JsonMemory["TimeRunning"] = TimeRunning;
+        JsonMemory["TimeInSequence"] = TimeInSequence;
 
       //Step 2 - Sensor & Logic data write - Send data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
 
