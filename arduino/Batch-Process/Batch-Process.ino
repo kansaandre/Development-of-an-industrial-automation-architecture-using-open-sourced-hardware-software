@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 //LAST UPDATE (roughly): 20.04.2023 03:12
+=======
+//LAST UPDATE (roughly): 20.04.2023 01:30
+>>>>>>> parent of fab32d6 (Update Batch-Process.ino)
 //Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
   //NOTE! In code a lot of referencing to thesis document is done to clearify/document code
@@ -221,6 +225,7 @@
           serializeJson(JsonSerialReady, jsonstring);
           Serial.println(jsonstring);
           
+<<<<<<< HEAD
         // Listen to serial port and read out JSON data from HMI Layer
           jsonstring = ""; // clear jsonstring
         
@@ -251,6 +256,24 @@
             // Handle the case when no data was received or timeout occurred
             // You can add error handling or logging here
           }
+=======
+        //Listen to serial port and read out JSON data from HMI Layer 
+          jsonstring = ""; // clear jsonstring
+
+          while (Serial.available() == 0) {
+            // Do nothing; just wait for data
+            delay(10);
+          }
+            
+          while (Serial.available() > 0){
+  
+            c = (char)Serial.read(); // Read one character from the serial buffer
+            jsonstring += c;
+          }
+          
+        //Store serial data string in JSON memory // effectively making into json object
+          deserializeJson(JsonMemory, jsonstring);
+>>>>>>> parent of fab32d6 (Update Batch-Process.ino)
 
         //Close gate stopping serial data from HMI layer to Control Layer 
           flow = "RequestLogicForceFreezeRead";
