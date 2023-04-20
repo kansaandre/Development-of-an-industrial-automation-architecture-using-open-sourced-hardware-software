@@ -82,8 +82,8 @@
       //Properties only found in the control layer
          unsigned long current_time;
          char c;
-
-           
+         unsigned long timeout = 1000; // Timeout duration in milliseconds
+         unsigned long startTime = millis();
 
 //-------------------------------------------------------------------------------------------------------------------//
   
@@ -213,33 +213,27 @@
           serializeJson(JsonSerialReady, jsonstring);
           Serial.println(jsonstring);
           
-        //Listen to serial port and read out JSON data from HMI Layer 
+        // Listen to serial port and read out JSON data from HMI Layer
+          jsonstring = ""; // clear jsonstring
         
-          // Set a timeout for serial communication
-            Serial.setTimeout(22000); // Timeout duration in milliseconds
-          
-          // Listen to serial port and read out JSON data from HMI Layer
-            jsonstring = ""; // clear jsonstring
-          
-          // Read data from the serial buffer until a timeout occurs
-            while (Serial.available() > 0) {
-              c = (char)Serial.read(); // Read one character from the serial buffer
-              jsonstring += c;
-            }
-          
-          // Check if any data was received
-            if (jsonstring.length() > 0) {
-              // Store serial data string in JSON memory, effectively making it into a JSON object
-              deserializeJson(JsonMemory, jsonstring);
-            } 
-          
-            else {
-              // Handle the case when no data was received or timeout occurred
-              // You can add error handling or logging here
-            }
-          
-        //Store serial data string in JSON memory // effectively making into json object
-          deserializeJson(JsonMemory, jsonstring);
+        // Wait for data or until timeout expires
+          while (Serial.available() == 0 && millis() - startTime < timeout) {
+          }
+        
+        // Read data from the serial buffer
+          while (Serial.available() > 0) {
+            c = (char)Serial.read(); // Read one character from the serial buffer
+            jsonstring += c;
+          }
+        
+        // Check if any data was received
+          if (jsonstring.length() > 0) {
+            // Store serial data string in JSON memory, effectively making it into a JSON object
+            deserializeJson(JsonMemory, jsonstring);
+          } else {
+            // Handle the case when no data was received or timeout occurred
+            // You can add error handling or logging here
+          }
 
         //Close gate stopping serial data from HMI layer to Control Layer 
           flow = "RequestLogicForceFreezeRead";
