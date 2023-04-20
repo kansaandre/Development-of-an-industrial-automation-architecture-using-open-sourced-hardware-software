@@ -225,7 +225,7 @@
           jsonstring = ""; // clear jsonstring
         
         // Wait for data or until timeout expires
-          while (Serial.available() == 0 && millis() - startTime < timeout) {
+          while ((Serial.available() == 0) && ((millis() - startTime) < timeout)) {
           }
         
         // Read data from the serial buffer
@@ -238,6 +238,16 @@
           if (jsonstring.length() > 0) {
             // Store serial data string in JSON memory, effectively making it into a JSON object
             deserializeJson(JsonMemory, jsonstring);
+
+            //Test - See what data has been read from HMI Layer and added to our JsonMemory (made to object).        
+              flow = "test"; //Identification property
+              JsonMemory["flow"] = flow;
+      
+              jsonstring = ""; // clear jsonstring
+      
+              serializeJson(JsonMemory, jsonstring);
+              Serial.println(jsonstring);            
+                
           } else {
             // Handle the case when no data was received or timeout occurred
             // You can add error handling or logging here
@@ -254,15 +264,7 @@
           serializeJson(JsonSerialReady, jsonstring); //Send stop signal to HMI Layer
           Serial.println(jsonstring); //Send stop signal to HMI Layer
 
-        //Test - See what data has been read from HMI Layer and added to our JsonMemory (made to object).
         
-          flow = "test"; //Identification property
-          JsonMemory["flow"] = flow;
-  
-          jsonstring = ""; // clear jsonstring
-  
-          serializeJson(JsonMemory, jsonstring);
-          Serial.println(jsonstring);
       
     }
   
