@@ -225,8 +225,7 @@
           jsonstring = ""; // clear jsonstring
         
         // Wait for data or until timeout expires
-          while ((Serial.available() == 0) && ((millis() - startTime) < timeout)) {
-          }
+          Serial.setTimeout(4000000)
         
         // Read data from the serial buffer
           while (Serial.available() > 0) {
