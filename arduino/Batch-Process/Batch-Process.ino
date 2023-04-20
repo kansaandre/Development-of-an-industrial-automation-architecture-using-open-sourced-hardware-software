@@ -87,6 +87,8 @@
          uint16_t TimeOut = 25000; //ms
          unsigned long TimeInSequence; //ms
          unsigned long TimeRunning = millis(); //ms
+         uint16_t TimeInSequenceJSON;
+         uint16_t TimeRunningJSON;
 
 //-------------------------------------------------------------------------------------------------------------------//
   
@@ -164,9 +166,11 @@
     void interrupt(){
       
       TimeInSequence = TimeRunning - TimeInSequence; // Tracking time in sequence meaning (state != ready)
+      TimeInSequenceJSON = TimeInSequence/1000; //s
+      TimeRunningJSON = TimeRunning/1000; //s
         
       //Setup of JSON // JSON is used as our commuication data interchange between layers // destroyed everytime as recommended by documentation of ArduinoJson.h
-      StaticJsonDocument<700> JsonMemory; //Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
+      StaticJsonDocument<400> JsonMemory; //Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
       StaticJsonDocument<100> JsonSerialReady;  
 
       //Step 1 - Read In Updated Variables - (see Figure 9. from thesis document v1.0)
@@ -190,8 +194,8 @@
         JsonMemory["flow"] = flow;
         JsonMemory["overridemode"] = overridemode;
         JsonMemory["error"] = error;
-        JsonMemory["TimeRunning"] = TimeRunning;
-        JsonMemory["TimeInSequence"] = TimeInSequence;
+        JsonMemory["TimeInSequence"] = TimeInSequenceJSON;
+        JsonMemory["TimeRunning"] = TimeRunningJSON;
 
       //Step 2 - Sensor & Logic data write - Send data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
         flow = "SensorLogicDataWrite"; //Identification property in our JSON data // used with figure 9. from thesis document v1.0.
