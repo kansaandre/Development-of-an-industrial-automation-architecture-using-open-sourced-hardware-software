@@ -10,7 +10,7 @@
     {
         "id": "3c689f194f494e02",
         "type": "serial-port",
-        "serialport": "/dev/ttyUSB1",
+        "serialport": "/dev/ttyUSB0",
         "serialbaud": "9600",
         "databits": "8",
         "parity": "none",
@@ -170,9 +170,7 @@
         "x": 70,
         "y": 240,
         "wires": [
-            [
-                "8788df018168708a"
-            ]
+            []
         ]
     },
     {
@@ -392,9 +390,7 @@
         "x": 750,
         "y": 360,
         "wires": [
-            [
-                "d0430af33b4a0b17"
-            ]
+            []
         ]
     },
     {
@@ -542,7 +538,6 @@
         "y": 320,
         "wires": [
             [
-                "c51bb8914503c5b4",
                 "e37f6629cdc67b52"
             ]
         ]
@@ -604,9 +599,7 @@
         "x": 1650,
         "y": 320,
         "wires": [
-            [
-                "751b4c1bf8d62bd1"
-            ]
+            []
         ]
     },
     {
@@ -618,7 +611,8 @@
         "tosidebar": true,
         "console": false,
         "tostatus": false,
-        "complete": "false",
+        "complete": "true",
+        "targetType": "full",
         "statusVal": "",
         "statusType": "auto",
         "x": 300,

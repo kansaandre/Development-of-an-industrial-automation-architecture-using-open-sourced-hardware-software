@@ -85,14 +85,14 @@ void setup(){ // The setup() function is executed only once, when the Arduino bo
     unsigned long TimeRunning = millis(); // ms // Tracking time since program was uploaded to microcontroller.
     
     //Setup of JSON // JSON is used as our communication data interchange between layers 
-    StaticJsonDocument<400> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
+    StaticJsonDocument<300> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
     StaticJsonDocument<100> JsonSerialReady;
     
     //StateMachine()
       unsigned long current_time; // ms // Used to track time for a condition in one state in our StateMachine function
       unsigned long TimeInSequence; // ms // Track time since we were last in state: Ready (meaning time since sequence begun)
       //(millis() - EntryTime) < TimeOut) Exit conditions to compensate for blocking code in our StateMachine()
-        const uint8_t TimeOut = 10; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop()
+        const uint8_t TimeOut = 50; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
         uint32_t EntryTime; // ms // Start tracking time as soon as we enter a state so we know how long we been there.
         
     //LogicForceFreezeRead()
