@@ -83,7 +83,11 @@ void setup(){ // The setup() function is executed only once, when the Arduino bo
   
     //Overall
     unsigned long TimeRunning = millis(); // ms // Tracking time since program was uploaded to microcontroller.
-  
+    
+    //Setup of JSON // JSON is used as our communication data interchange between layers 
+    StaticJsonDocument<400> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
+    StaticJsonDocument<100> JsonSerialReady;
+    
     //StateMachine()
       unsigned long current_time; // ms // Used to track time for a condition in one state in our StateMachine function
       unsigned long TimeInSequence; // ms // Track time since we were last in state: Ready (meaning time since sequence begun)
@@ -192,9 +196,8 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
 
 void loop(){
 
-  // Setup of JSON // JSON is used as our communication data interchange between layers // destroyed every time as recommended by documentation of ArduinoJson.h
-    StaticJsonDocument<300> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
-    StaticJsonDocument<100> JsonSerialReady;
+  JsonMemory.clear(); // Clear JsonMemory // Done to have the document globally declared https://arduinojson.org/v6/how-to/reuse-a-json-document/
+  JsonSerialReady.clear(); // Clear JsonSerialReady // Done to have the document globally declared https://arduinojson.org/v6/how-to/reuse-a-json-document/
     
   // Keep track of time variables, see declaration for more info.
     TimeInSequence = TimeRunning - TimeInSequence; // Tracking time in sequence meaning (state != ready)
