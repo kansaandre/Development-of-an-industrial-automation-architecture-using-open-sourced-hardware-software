@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 21.04.2023 22:08
+// LAST UPDATE (roughly): 21.04.2023 22:21
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -89,7 +89,7 @@ void setup(){ // The setup() function is executed only once, when the Arduino bo
       unsigned long current_time; // ms // Used to track time for a condition in one state in our StateMachine function
       unsigned long TimeInSequence; // ms // Track time since we were last in state: Ready (meaning time since sequence begun)
       //(millis() - EntryTime) < TimeOut) Exit conditions to compensate for blocking code in our StateMachine()
-        const uint8_t TimeOut = 50; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
+        const uint8_t TimeOut = 250; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
         uint32_t EntryTime; // ms // Start tracking time as soon as we enter a state so we know how long we been there.
         
     //LogicForceFreezeRead()
@@ -280,66 +280,37 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
     
     serializeJson(JsonSerialReady, jsonstring); // Function that converts JSON object to a string.
     Serial.println(jsonstring); // Function that prints text to the Serial Monitor.
-
-
-    // Check if there is any data in the serial buffer
-      while (Serial.available() > 0) {
-      char c = Serial.read(); // Read one character from the serial buffer
-
-    if (c == delimiter) {
-      // Entire JSON string received, process it
-      StaticJsonDocument<400> JsonMemory;
-      DeserializationError error = deserializeJson(JsonMemory, jsonstring);
-      
-      if (!error) {
-        String flow = "test"; // Identification property
-        JsonMemory["flow"] = flow;
-
-        jsonstring = "";
-        serializeJson(JsonMemory, jsonstring);
-        Serial.println(jsonstring);
-      } else {
-        // Handle JSON deserialization error
-        Serial.println("JSON deserialization error");
-      }
-
-      // Clear the jsonstring for the next JSON message
-      jsonstring = "";
-    } else {
-      // Keep appending characters to jsonstring until delimiter is encountered
-      jsonstring += c;
-    }
-  }
     
-//  // Listen to serial port and read out JSON data from HMI Layer
-//    jsonstring = ""; // clear jsonstring
-//    SerialWait = millis(); // set it to current time used to track time since we began listening for data from HMI layer (Node-RED) at serial port
-//    
-//    while ((Serial.available() == 0) and (millis() - SerialWait < SerialTimeOut)) {
-//    // Do nothing; just wait for data
-//    delay(1); // Just to keep it from going bananas
-//    }
-//    
-//    while (Serial.available() > 0) {
-//    c = (char)Serial.read(); // Read one character from the serial buffer
-//    jsonstring += c;
-//    }
-//  
-//  // Check if any data was received
-//    if (jsonstring.length() > 0) {
-//      deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object
-//      flow = "test"; // Identification property
-//      JsonMemory["flow"] = flow;
-//      
-//      jsonstring = "";
-//    
-//      serializeJson(JsonMemory, jsonstring);
-//      Serial.println(jsonstring);
-//      
-//    } else {
-//        // Handle the case when no data was received or timeout occurred
-//        // You can add error handling or logging here
-//      }
+  // Listen to serial port and read out JSON data from HMI Layer
+    jsonstring = ""; // clear jsonstring
+    SerialWait = millis(); // set it to current time used to track time since we began listening for data from HMI layer (Node-RED) at serial port
+    
+    while ((Serial.available() == 0) and (millis() - SerialWait < SerialTimeOut)) {
+    // Do nothing; just wait for data
+    delay(1); // Just to keep it from going bananas
+    }
+    
+    while (Serial.available() > 0) {
+    c = (char)Serial.read(); // Read one character from the serial buffer
+    char k[] += c;
+    //jsonstring += c;
+    }
+  
+  // Check if any data was received
+    if (jsonstring.length() > 0) {
+      deserializeJson(JsonMemory, k[]); // Store serial data string in JSON memory, effectively making it into a JSON object
+      flow = "test"; // Identification property
+      JsonMemory["flow"] = flow;
+      
+      jsonstring = "";
+    
+      serializeJson(JsonMemory, jsonstring);
+      Serial.println(jsonstring);
+      
+    } else {
+        // Handle the case when no data was received or timeout occurred
+        // You can add error handling or logging here
+      }
   
   // Sending stop signal to the close function in Node-RED stopping serial data from the HMI layer to Control Layer
     flow = "RequestLogicForceFreezeRead";
