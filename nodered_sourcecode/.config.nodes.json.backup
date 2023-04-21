@@ -676,5 +676,79 @@
                 "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-dashboard/nodes/ui_spacer.js"
             }
         }
+    },
+    "node-red-contrib-uibuilder": {
+        "name": "node-red-contrib-uibuilder",
+        "version": "6.3.0",
+        "local": true,
+        "user": true,
+        "nodes": {
+            "uibuilder": {
+                "name": "uibuilder",
+                "types": [
+                    "uibuilder"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-uibuilder",
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-contrib-uibuilder/nodes/uibuilder.js"
+            },
+            "uib-cache": {
+                "name": "uib-cache",
+                "types": [
+                    "uib-cache"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-uibuilder",
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-contrib-uibuilder/nodes/uib-cache.js"
+            },
+            "uib-element": {
+                "name": "uib-element",
+                "types": [
+                    "uib-element"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-uibuilder",
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-contrib-uibuilder/nodes/uib-element/customNode.js"
+            },
+            "uib-update": {
+                "name": "uib-update",
+                "types": [
+                    "uib-update"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-uibuilder",
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-contrib-uibuilder/nodes/uib-update/customNode.js"
+            },
+            "uib-sender": {
+                "name": "uib-sender",
+                "types": [
+                    "uib-sender"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-uibuilder",
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-contrib-uibuilder/nodes/uib-sender.js"
+            },
+            "uib-list": {
+                "name": "uib-list",
+                "types": [
+                    "uib-list"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-uibuilder",
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-contrib-uibuilder/nodes/uib-list/customNode.js"
+            }
+        }
     }
 }

@@ -171,6 +171,7 @@
         "y": 240,
         "wires": [
             [
+                "8788df018168708a",
                 "79d48dc2f3803223"
             ]
         ]
@@ -207,7 +208,7 @@
         "resendOnRefresh": true,
         "templateScope": "local",
         "className": "",
-        "x": 380,
+        "x": 520,
         "y": 360,
         "wires": [
             [
@@ -223,7 +224,7 @@
         "property": "payload",
         "action": "obj",
         "pretty": false,
-        "x": 270,
+        "x": 230,
         "y": 240,
         "wires": [
             [
@@ -242,11 +243,12 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 970,
+        "x": 1150,
         "y": 300,
         "wires": [
             [
-                "f1abddd02582ed7c"
+                "f1abddd02582ed7c",
+                "c4dfda07b61c6794"
             ]
         ]
     },
@@ -269,7 +271,7 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 560,
+        "x": 720,
         "y": 240,
         "wires": [
             [
@@ -296,7 +298,7 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 560,
+        "x": 720,
         "y": 300,
         "wires": [
             [
@@ -324,7 +326,7 @@
         "reduceInit": "",
         "reduceInitType": "",
         "reduceFixup": "",
-        "x": 750,
+        "x": 930,
         "y": 300,
         "wires": [
             [
@@ -355,7 +357,7 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 210,
+        "x": 370,
         "y": 300,
         "wires": [
             [
@@ -375,7 +377,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 370,
+        "x": 530,
         "y": 300,
         "wires": [
             [
@@ -389,10 +391,12 @@
         "z": "5876467d554e446b",
         "name": "",
         "serial": "3c689f194f494e02",
-        "x": 750,
+        "x": 730,
         "y": 360,
         "wires": [
-            []
+            [
+                "d0430af33b4a0b17"
+            ]
         ]
     },
     {
@@ -413,14 +417,14 @@
         "reduceRight": false,
         "reduceExp": "",
         "reduceInit": "",
-        "reduceInitType": "",
+        "reduceInitType": "num",
         "reduceFixup": "",
-        "x": 1270,
+        "x": 1450,
         "y": 320,
         "wires": [
             [
-                "c4dfda07b61c6794",
-                "77daeec6420070af"
+                "c42d959f22ad2b1e",
+                "7dd1cc589590c7d4"
             ]
         ]
     },
@@ -432,7 +436,7 @@
         "property": "payload",
         "action": "obj",
         "pretty": false,
-        "x": 910,
+        "x": 890,
         "y": 360,
         "wires": [
             [
@@ -444,14 +448,14 @@
         "id": "62db15981d866861",
         "type": "function",
         "z": "5876467d554e446b",
-        "name": "filter",
-        "func": "if (msg.payload.flow === \"RequestLogicForceFreezeRead\"){\n    msg.payload.flow = null;\n    return msg;\n}\n\nelse{\n    // Do nothing\n}",
+        "name": "FilterPass->RequestLogicForceFreezeRead",
+        "func": "if (msg.payload.flow === \"RequestLogicForceFreezeRead\"){\n    msg.topic = \"RequestLogicForceFreezeRead\";\n    msg.payload.flow = null;\n    return msg;\n}\n\nelse{\n    // Do nothing\n}",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1070,
+        "x": 1150,
         "y": 360,
         "wires": [
             [
@@ -472,7 +476,7 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 540,
+        "x": 700,
         "y": 180,
         "wires": []
     },
@@ -488,7 +492,7 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 900,
+        "x": 1120,
         "y": 240,
         "wires": []
     },
@@ -504,7 +508,7 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1520,
+        "x": 1460,
         "y": 220,
         "wires": []
     },
@@ -521,28 +525,9 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1280,
+        "x": 1440,
         "y": 380,
         "wires": []
-    },
-    {
-        "id": "77daeec6420070af",
-        "type": "function",
-        "z": "5876467d554e446b",
-        "name": "wait for request",
-        "func": "if (msg.payload.SerialReady === true) {\n    msg.payload.flow = \"LogicForceFreezeRead\";\n    return msg;\n}\n\nelse {\n\n}\n",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 1460,
-        "y": 320,
-        "wires": [
-            [
-                "e37f6629cdc67b52"
-            ]
-        ]
     },
     {
         "id": "c51bb8914503c5b4",
@@ -556,22 +541,22 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1680,
-        "y": 440,
+        "x": 2060,
+        "y": 400,
         "wires": []
     },
     {
         "id": "6c8c757215e0bfc4",
         "type": "function",
         "z": "5876467d554e446b",
-        "name": "filter",
+        "name": "FilterPass->SensorLogicDataWrite",
         "func": "if (msg.payload.flow === \"SensorLogicDataWrite\"){\n    return msg;\n}\n\nelse{\n    // Do nothing\n}",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 390,
+        "x": 440,
         "y": 240,
         "wires": [
             [
@@ -586,7 +571,7 @@
         "z": "5876467d554e446b",
         "name": "",
         "serial": "3c689f194f494e02",
-        "x": 1810,
+        "x": 2110,
         "y": 320,
         "wires": []
     },
@@ -598,10 +583,13 @@
         "property": "payload",
         "action": "str",
         "pretty": false,
-        "x": 1650,
+        "x": 1890,
         "y": 320,
         "wires": [
-            []
+            [
+                "c51bb8914503c5b4",
+                "751b4c1bf8d62bd1"
+            ]
         ]
     },
     {
@@ -620,5 +608,74 @@
         "x": 300,
         "y": 180,
         "wires": []
+    },
+    {
+        "id": "7dd1cc589590c7d4",
+        "type": "function",
+        "z": "5876467d554e446b",
+        "name": "wait for request",
+        "func": "if (msg.payload.SerialReady === true) {\n    msg.payload.flow = \"LogicForceFreezeRead\";\n    return msg;\n}\n\nelse {\n\n}\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1660,
+        "y": 320,
+        "wires": [
+            [
+                "e37f6629cdc67b52",
+                "09b76a8d650c5ff2"
+            ]
+        ]
+    },
+    {
+        "id": "c42d959f22ad2b1e",
+        "type": "debug",
+        "z": "5876467d554e446b",
+        "name": "debug 7",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1660,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "09b76a8d650c5ff2",
+        "type": "debug",
+        "z": "5876467d554e446b",
+        "name": "debug 9",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 2220,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "77daeec6420070af",
+        "type": "function",
+        "z": "5876467d554e446b",
+        "name": "Merge",
+        "func": "var LogicForceFreezeRead = msg.payload.LogicForceFreezeRead;\nvar RequestLogicForceFreezeRead = msg.payload.RequestLogicForceFreezeRead;\n\nmsg.payload = LogicForceFreezeRead;\nmsg.payload.SerialReady = RequestLogicForceFreezeRead.SerialReady;\nreturn msg; ",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1730,
+        "y": 100,
+        "wires": [
+            []
+        ]
     }
 ]

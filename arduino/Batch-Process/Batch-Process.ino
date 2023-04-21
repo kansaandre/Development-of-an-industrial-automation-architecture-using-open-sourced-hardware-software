@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 21.04.2023 22:21
+// LAST UPDATE (roughly): 21.04.2023 01:00
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -18,6 +18,10 @@
   //PROCESS-LAYER = SENSORS (SIMULATED BY NODE-RED)
 
 #include <ArduinoJson.h> //https://arduinojson.org/ // JSON data compatability with Arduino
+
+//Enter "sudo nano /usr/share/arduino/hardware/arduino/avr/cores/arduino/HardwareSerial.h" and change from the default 64 byte buffer size (for UNO anyway) to 350 bytes by changing "#define SERIAL_RX_BUFFER_SIZE 350"
+  //This is neccessary to be able to receive the large JSON data string we are receving from the HMI layer (aka Node-RED)...
+  
 //-------------------------------------------------------------------------------------------------------------------//
 
 //Setup of interrupt in our timer1 lib as well as serial commuication
@@ -82,14 +86,14 @@ void setup(){ // The setup() function is executed only once, when the Arduino bo
   //Properties only found in the Control Layer (meaning not sent to any other LAYER)
     
     //Setup of JSON // JSON is used as our communication data interchange between layers 
-    StaticJsonDocument<300> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
+    StaticJsonDocument<350> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
     StaticJsonDocument<100> JsonSerialReady;
     
     //StateMachine()
       unsigned long current_time; // ms // Used to track time for a condition in one state in our StateMachine function
       unsigned long TimeInSequence; // ms // Track time since we were last in state: Ready (meaning time since sequence begun)
       //(millis() - EntryTime) < TimeOut) Exit conditions to compensate for blocking code in our StateMachine()
-        const uint8_t TimeOut = 250; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
+        const uint16_t TimeOut = 1000; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
         uint32_t EntryTime; // ms // Start tracking time as soon as we enter a state so we know how long we been there.
         
     //LogicForceFreezeRead()
@@ -198,6 +202,7 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
 // What we actually have added here is visualized in figure 9 in thesis document v1.0.
 
 void loop(){
+  delay(20000);
 
   JsonMemory.clear(); // Clear JsonMemory // Done to have the document globally declared https://arduinojson.org/v6/how-to/reuse-a-json-document/
   JsonSerialReady.clear(); // Clear JsonSerialReady // Done to have the document globally declared https://arduinojson.org/v6/how-to/reuse-a-json-document/
@@ -287,25 +292,35 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
     
     while ((Serial.available() == 0) and (millis() - SerialWait < SerialTimeOut)) {
     // Do nothing; just wait for data
-    delay(1); // Just to keep it from going bananas
+    delay(10); // Just to keep it from going bananas
     }
+    
+    delay(100);
     
     while (Serial.available() > 0) {
     c = (char)Serial.read(); // Read one character from the serial buffer
-    char k[] += c;
-    //jsonstring += c;
+    jsonstring += c;
+
+      if (Serial.available() == 0){
+        delay(50); //Just to make sure we get all data.
+      }
     }
-  
+    Serial.println(jsonstring);
+    Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
+
   // Check if any data was received
     if (jsonstring.length() > 0) {
-      deserializeJson(JsonMemory, k[]); // Store serial data string in JSON memory, effectively making it into a JSON object
+      deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object
       flow = "test"; // Identification property
       JsonMemory["flow"] = flow;
+      JsonMemory["error"] = "heipadeg";
       
       jsonstring = "";
-    
+      
       serializeJson(JsonMemory, jsonstring);
       Serial.println(jsonstring);
+      Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
+
       
     } else {
         // Handle the case when no data was received or timeout occurred

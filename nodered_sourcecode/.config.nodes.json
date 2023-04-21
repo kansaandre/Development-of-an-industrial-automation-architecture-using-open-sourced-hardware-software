@@ -750,5 +750,24 @@
                 "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-contrib-uibuilder/nodes/uib-list/customNode.js"
             }
         }
+    },
+    "node-red-contrib-simple-gate": {
+        "name": "node-red-contrib-simple-gate",
+        "version": "0.5.2",
+        "local": true,
+        "user": false,
+        "nodes": {
+            "gate": {
+                "name": "gate",
+                "types": [
+                    "gate"
+                ],
+                "enabled": true,
+                "local": true,
+                "user": false,
+                "module": "node-red-contrib-simple-gate",
+                "file": "/home/kansa/Desktop/Bachelor/a/nodered_sourcecode/node_modules/node-red-contrib-simple-gate/gate.js"
+            }
+        }
     }
 }
