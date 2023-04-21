@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 21.04.2023 20:00
+// LAST UPDATE (roughly): 21.04.2023 21:30
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -80,9 +80,6 @@ void setup(){ // The setup() function is executed only once, when the Arduino bo
       states state = ready; // Default/initial state
 
   //Properties only found in the Control Layer (meaning not sent to any other LAYER)
-  
-    //Overall
-    unsigned long TimeRunning = millis(); // ms // Tracking time since program was uploaded to microcontroller.
     
     //Setup of JSON // JSON is used as our communication data interchange between layers 
     StaticJsonDocument<300> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
@@ -107,13 +104,18 @@ void setup(){ // The setup() function is executed only once, when the Arduino bo
 
 void StateMachine(){ // Main function for executing process logic sequence // Control Process Logic Loop (see Figure 8. in thesis document v1.0)
 
+    if (state == ready){
+    TimeInSequence = 0; // Reset sequence time tracker
+  } else if ((state != ready) and (state != pause)){
+    TimeInSequence = millis()- TimeInSequence; // Update time spent in sequence (Time since sketch was uploaded - Time since start button was pressed)
+    } 
+    
   switch (state) {
     case ready:
       EntryTime = millis();
       while ((millis() - EntryTime) < TimeOut) {
-        TimeInSequence = 0; // Reset sequence time tracker
         if (start) {
-          TimeInSequence = millis(); // Start counting time since we entered the sequence
+          TimeInSequence = millis(); // Set equal to time we "started" our sequence
           state = fill_A; // Change state to fill_A when start button is pressed
         }
       }
@@ -198,14 +200,14 @@ void loop(){
 
   JsonMemory.clear(); // Clear JsonMemory // Done to have the document globally declared https://arduinojson.org/v6/how-to/reuse-a-json-document/
   JsonSerialReady.clear(); // Clear JsonSerialReady // Done to have the document globally declared https://arduinojson.org/v6/how-to/reuse-a-json-document/
-    
-  // Keep track of time variables, see declaration for more info.
-    TimeInSequence = TimeRunning - TimeInSequence; // Tracking time in sequence meaning (state != ready)
-    TimeInSequenceJSON = TimeInSequence/1000; // s
-    TimeRunningJSON = TimeRunning/1000; // s
-  
+      
   // Call our functions
     StateMachine(); // Control Logic // Calling main function for executing process logic sequence
+    
+    // Keep track of time variables, see declaration for more info.
+      TimeInSequenceJSON = TimeInSequence/1000; // s
+      TimeRunningJSON = millis()/1000; // s
+      
     WriteInUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by StateMachine()
     SensorLogicDataWrite(); // Step 2 // Calling function that sends data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
     //Step 3 - HMI Layer which includes the user interface with override functionality - Hosted in Node-RED. //The UI modifies the data sent to Node-RED in SensorLogicDataWrite() and returns the modified data in LogicForceFreezeRead()   
