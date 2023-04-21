@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 21.04.2023 03:00
+// LAST UPDATE (roughly): 21.04.2023 04:00
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
