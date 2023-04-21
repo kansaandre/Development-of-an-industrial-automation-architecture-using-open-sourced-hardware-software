@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 21.04.2023 04:00
+// LAST UPDATE (roughly): 21.04.2023 20:00
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -26,7 +26,7 @@ void setup(){ // The setup() function is executed only once, when the Arduino bo
     
 //Serial communication setup
   Serial.begin(9600); // //9600 baud per seconds (bits per seconds)
-  delay(5000); // Wait until serial commuication is up and running before "starting" program.
+  delay(10000); // Wait until serial commuication is up and running before "starting" program.
 }
 
 //-------------------------------------------------------------------------------------------------------------------//
