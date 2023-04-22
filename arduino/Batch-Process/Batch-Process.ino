@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 22.04.2023 21:30
+// LAST UPDATE (roughly): 22.04.2023 22:05
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -55,6 +55,7 @@
     
     // JSON declaration variables
       String jsonstring = ""; // Used to send/receive JSON as string between layers
+      String jsonstring2 = ""; // Used to temporaly store the jsonstring at various sections in our code
       boolean SerialReady = false; // Used for handshake agreement when HMI Layer is to send data to Control Layer.
                                    // Needed to make sure we are listening on the serial port before the large JSON
                                    // data string is sent. Can be removed with larger serial receiver buffer....
@@ -155,8 +156,9 @@ void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
     flow = JsonMemory["flow"].as<String>();
     overridemode = JsonMemory["overridemode"];
     error = JsonMemory["error"].as<String>();
-    JsonMemory["TimeInSequence"] = TimeInSequenceJSON; //Kept track on only in Arduino // Meaning is only declared/updated/changed in Arduino (Control Layer)
-    JsonMemory["TimeRunning"] = TimeRunningJSON; //Kept track on only in Arduino // Meaning is only declared/updated/changed in Arduino (Control Layer)
+    
+    JsonMemory["TimeInSequence"] = TimeInSequenceJSON; //Kept track on only in Arduino // Meaning is only declared/updated/changed in the  Arduino (Control Layer)
+    JsonMemory["TimeRunning"] = TimeRunningJSON; //Kept track on only in Arduino // Meaning is only declared/updated/changed in the Arduino (Control Layer)
 }
 
 //-------------------------------------------------------------------------------------------------------------------//
@@ -308,14 +310,15 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
         delay(200); //Just to make sure we get all data.
       }
     }
-    Serial.println(jsonstring);
-    Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
+    jsonstring2 = jsonstring; // stored as we will need data for ActuatorWrite() but we need to execute function RequestLogicForceFreezeRead() first.
 }
    
 //----------------------------------------------------------
 
 void ActuatorWrite() {
   // Check if any data was received
+    jsonstring = jsonstring2; // Data read from LogicForceFreezeRead();
+    
     if (jsonstring.length() > 0) {
       Serial.println(jsonstring);   
       DeserializationError error = deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object. Note deserializeJson clear JsonMemory before writing jsonstring to it.      
