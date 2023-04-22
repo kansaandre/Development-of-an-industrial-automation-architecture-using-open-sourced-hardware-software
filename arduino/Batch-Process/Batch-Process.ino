@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 22.04.2023 19:57
+// LAST UPDATE (roughly): 22.04.2023 20:20
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -308,6 +308,7 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
         delay(100); //Just to make sure we get all data.
       }
     }
+    Serial.println(jsonstring();
     Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
 }
    
@@ -316,6 +317,9 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
 void ActuatorWrite() {
   // Check if any data was received
     if (jsonstring.length() > 0) {
+      Serial.println(jsonstring();
+      jsonstring = jsontring;
+      Serial.println(jsonstring();
       JsonMemory.clear();      
       DeserializationError error = deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object. Note deserializeJson clear JsonMemory before writing jsonstring to it.      
       
