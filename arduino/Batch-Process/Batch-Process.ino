@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 22.04.2023 14:55
+// LAST UPDATE (roughly): 22.04.2023 15:05
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -93,8 +93,8 @@
   //Setup of JSON // JSON is used as our communication data interchange between layers 
     StaticJsonDocument<350> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
     
-    StaticJsonDocument<100> JsonSerialReady; 
-    
+    StaticJsonDocument<100> JsonSerialReady;
+
     void InitJsonMemory() { //Error "'JsonMemory' does not name a type" usually occurs when you try to use a variable outside of a function scope therefore it has its own function... run at void setup()...
     //Iniziation of variables to be written to JsonMemory
       JsonMemory["start"] = start;
@@ -126,6 +126,8 @@ void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
   // Here we will update our variables which may have been given new values from the control logic code above.
   // We write our variables into memory allocated to the StaticJsonDocument where it will be stored ready for transmission.
   // Check declaration in top of code for explanation about the variables
+
+  InitJsonMemory(); // Function that initializes the JsonMemory object with the desired values
   
   start = JsonMemory["start"];
   stop1 = JsonMemory["stop1"];
@@ -420,7 +422,4 @@ void setup(){ // The setup() function is executed only once, when the Arduino bo
 //Serial communication setup
   Serial.begin(9600); // //9600 baud per seconds (bits per seconds)
   delay(10000); // Wait until serial commuication is up and running before "starting" program.
-
-//InitJsonMemory
-  InitJsonMemory(); // Function that initializes the JsonMemory object with the desired values
 }
