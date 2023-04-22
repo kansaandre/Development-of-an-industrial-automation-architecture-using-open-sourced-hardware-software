@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 22.04.2023 16:45
+// LAST UPDATE (roughly): 22.04.2023 17:58
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -17,7 +17,7 @@
   //CONTROL-LAYER = ARDUINO (HERE)
   //PROCESS-LAYER = SENSORS (SIMULATED BY NODE-RED)
 
-#include <ArduinoJson.h> //https://arduinojson.org/ // JSON data compatability with Arduino
+#include <ArduinoJson.h> // v6 used in v1.0 // https://arduinojson.org/ // JSON data compatability with Arduino
 
 //Enter "sudo nano /usr/share/arduino/hardware/arduino/avr/cores/arduino/HardwareSerial.h" and change from the default 64 byte buffer size (for UNO anyway) to 350 bytes by changing "#define SERIAL_RX_BUFFER_SIZE 350"
   //This is neccessary to be able to receive the large JSON data string we are receving from the HMI layer (aka Node-RED)...
@@ -304,7 +304,9 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
         delay(100); //Just to make sure we get all data.
       }
     }
+    Serial.println(jsonstring);
 }
+
 //----------------------------------------------------------
 
 void ActuatorWrite() {
@@ -421,7 +423,6 @@ void loop(){
     RequestSensorDataRead(false); // Stop step 8 from sending data without request from the Process Layer to the Control Layer (aka Arduino) // set "gate" function node to false for blockage
 
 }
-//-------------------------------------------------------------------------------------------------------------------//
 //-------------------------------------------------------------------------------------------------------------------//
 
 //Setup of interrupt in our timer1 lib as well as serial commuication
