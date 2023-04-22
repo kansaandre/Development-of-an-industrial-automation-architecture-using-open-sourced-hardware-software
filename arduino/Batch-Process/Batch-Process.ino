@@ -95,7 +95,7 @@
 
   //Setup of JSON // JSON is used as our communication data interchange between layers 
   
-    StaticJsonDocument<300> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document
+    StaticJsonDocument<325> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document
     StaticJsonDocument<100> JsonSerialReady; // This will destroy and recreate the document
     
     void InitJsonMemory() { //Error "'JsonMemory' does not name a type" usually occurs when you try to use a variable outside of a function scope therefore it has its own function... run at void setup()...
