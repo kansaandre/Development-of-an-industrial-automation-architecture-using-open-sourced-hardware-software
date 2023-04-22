@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 22.04.2023 20:20
+// LAST UPDATE (roughly): 22.04.2023 20:50
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -95,7 +95,7 @@
 
   //Setup of JSON // JSON is used as our communication data interchange between layers 
   
-    StaticJsonDocument<400> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document
+    StaticJsonDocument<300> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document
     StaticJsonDocument<100> JsonSerialReady; // This will destroy and recreate the document
     
     void InitJsonMemory() { //Error "'JsonMemory' does not name a type" usually occurs when you try to use a variable outside of a function scope therefore it has its own function... run at void setup()...
@@ -308,7 +308,7 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
         delay(100); //Just to make sure we get all data.
       }
     }
-    Serial.println(jsonstring();
+    Serial.println(jsonstring);
     Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
 }
    
@@ -317,9 +317,9 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
 void ActuatorWrite() {
   // Check if any data was received
     if (jsonstring.length() > 0) {
-      Serial.println(jsonstring();
-      jsonstring = jsontring;
-      Serial.println(jsonstring();
+      Serial.println(jsonstring);
+      jsonstring = jsonstring;
+      Serial.println(jsonstring);
       JsonMemory.clear();      
       DeserializationError error = deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object. Note deserializeJson clear JsonMemory before writing jsonstring to it.      
       
@@ -442,6 +442,6 @@ void loop(){
 void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset
     
 //Serial communication setup
-  Serial.begin(9600); // //9600 baud per seconds (bits per seconds)
+  Serial.begin(4800); // //9600 baud per seconds (bits per seconds)
   delay(10000); // Wait until serial commuication is up and running before "starting" program.
 }
