@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 22.04.2023 20:50
+// LAST UPDATE (roughly): 22.04.2023 21:30
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -298,14 +298,14 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
     delay(10); // Just to keep it from going bananas
     }
     
-    delay(100);
+    delay(200);
     
     while (Serial.available() > 0) {
     c = (char)Serial.read(); // Read one character from the serial buffer
     jsonstring += c;
 
       if (Serial.available() == 0){
-        delay(100); //Just to make sure we get all data.
+        delay(200); //Just to make sure we get all data.
       }
     }
     Serial.println(jsonstring);
@@ -317,10 +317,7 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
 void ActuatorWrite() {
   // Check if any data was received
     if (jsonstring.length() > 0) {
-      Serial.println(jsonstring);
-      jsonstring = jsonstring;
-      Serial.println(jsonstring);
-      JsonMemory.clear();      
+      Serial.println(jsonstring);   
       DeserializationError error = deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object. Note deserializeJson clear JsonMemory before writing jsonstring to it.      
       
       JsonMemory["error"] = error.c_str();
@@ -370,14 +367,14 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
     delay(10); // Just to keep it from going bananas
     }
     
-    delay(100);
+    delay(200);
     
     while (Serial.available() > 0) {
     c = (char)Serial.read(); // Read one character from the serial buffer
     jsonstring += c;
 
       if (Serial.available() == 0){
-        delay(100); //Just to make sure we get all data.
+        delay(200); //Just to make sure we get all data.
       }
     }
 
