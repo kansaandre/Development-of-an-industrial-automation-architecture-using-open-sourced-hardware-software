@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 22.04.2023 15:05
+// LAST UPDATE (roughly): 22.04.2023 16:45
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -72,7 +72,10 @@
     };
       states state = ready; // Default/initial state
 
-  //Properties only found in the Control Layer (meaning not sent to any other LAYER) 
+  //Properties only found in the Control Layer (meaning not sent to any other LAYER)
+
+    //WriteInUpdatedVariables()
+      boolean i = false; // Used to call InitJsonMemory() only first the time WriteInUpdatedVariables() is called
     
     //StateMachine()
       unsigned long current_time; // ms // Used to track time for a condition in one state in our StateMachine function
@@ -122,33 +125,37 @@
 
 void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
 
-  // Step 1 - Write In Updated Variables updated by StateMachine() - (see Figure 9. from thesis document v1.0)
-  // Here we will update our variables which may have been given new values from the control logic code above.
+  // Step 1 - Write In Updated Variables updated - (see Figure 9. from thesis document v1.0)
+  // Here we will update our variables found in Arduino code before and after control code, StateMAchine(), is called. 
   // We write our variables into memory allocated to the StaticJsonDocument where it will be stored ready for transmission.
   // Check declaration in top of code for explanation about the variables
 
-  InitJsonMemory(); // Function that initializes the JsonMemory object with the desired values
-  
-  start = JsonMemory["start"];
-  stop1 = JsonMemory["stop1"];
-  stop2 = JsonMemory["stop2"];
-  heater = JsonMemory["heater"];
-  stirrer = JsonMemory["stirrer"];
-  valveA = JsonMemory["valveA"];
-  valveB = JsonMemory["valveB"];
-  valveC = JsonMemory["valveC"];
-  s1 = JsonMemory["s1"];
-  s2 = JsonMemory["s2"];
-  s3 = JsonMemory["s3"];
-  temp = JsonMemory["temp"];
-  state = JsonMemory["state"];
-  counter = JsonMemory["counter"];
-  flow = JsonMemory["flow"].as<String>();
-  overridemode = JsonMemory["overridemode"];
-  error = JsonMemory["error"].as<String>();
-  JsonMemory["TimeInSequence"] = TimeInSequenceJSON;
-  JsonMemory["TimeRunning"] = TimeRunningJSON;
-  
+  // Initialize JSON 
+    if (i == false){
+      InitJsonMemory(); // Function that initializes the JsonMemory object with the desired values only first time WriteInUpdatedVariables() is called
+      i = true;
+    }
+
+  // Read updated variables which has been updated by either the SensorDataRead() (updating INPUTS before StateMachine() run) or by the StateMachine() itself (updating OUTPUTS to be sent to HMI Layer) 
+    start = JsonMemory["start"];
+    stop1 = JsonMemory["stop1"];
+    stop2 = JsonMemory["stop2"];
+    heater = JsonMemory["heater"];
+    stirrer = JsonMemory["stirrer"];
+    valveA = JsonMemory["valveA"];
+    valveB = JsonMemory["valveB"];
+    valveC = JsonMemory["valveC"];
+    s1 = JsonMemory["s1"];
+    s2 = JsonMemory["s2"];
+    s3 = JsonMemory["s3"];
+    temp = JsonMemory["temp"];
+    state = JsonMemory["state"];
+    counter = JsonMemory["counter"];
+    flow = JsonMemory["flow"].as<String>();
+    overridemode = JsonMemory["overridemode"];
+    error = JsonMemory["error"].as<String>();
+    JsonMemory["TimeInSequence"] = TimeInSequenceJSON;
+    JsonMemory["TimeRunning"] = TimeRunningJSON;
 }
 
 //-------------------------------------------------------------------------------------------------------------------//
@@ -237,8 +244,7 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
           }
       }
       break;
-  }
-  
+  } 
 }
 
 //----------------------------------------------------------
@@ -381,15 +387,18 @@ void loop(){
 
   JsonMemory.clear(); // Clear JsonMemory // Done to have the document globally declared https://arduinojson.org/v6/how-to/reuse-a-json-document/
   JsonSerialReady.clear(); // Clear JsonSerialReady // Done to have the document globally declared https://arduinojson.org/v6/how-to/reuse-a-json-document/
-      
+
   // Call our functions
+
+    WriteInUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by SensorDataRead() // READ INPUT
+    
     StateMachine(); // Control Logic // Calling main function for executing process logic sequence
     
   // Keep track of / Update - our time variables, see declaration for more info.
     TimeInSequenceJSON = TimeInSequence/1000; // s
     TimeRunningJSON = millis()/1000; // s
       
-    WriteInUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by StateMachine()
+    WriteInUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by StateMachine() // UPDATE OUTPUT
     
     SensorLogicDataWrite(); // Step 2 // Calling function that sends data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
 
