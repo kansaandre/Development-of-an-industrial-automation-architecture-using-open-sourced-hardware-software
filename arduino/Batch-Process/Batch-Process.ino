@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 22.04.2023 22:05
+// LAST UPDATE (roughly): 22.04.2023 22:30
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -49,13 +49,12 @@
       uint8_t counter = 0; // Counter used to count how many times sequence has looped
       String flow = ""; // Variable used to identify string when sent on serial line in JSON format
       boolean overridemode = false; // Set in the UI when operators/engineers override values manually
-      String error = ""; // Error message that can be used to detect error in communication when transferring to another layer
       uint16_t TimeInSequenceJSON; // s // TimeInSequence varible divided by 1000 = seconds since sequence was started
       uint16_t TimeRunningJSON; // s // TimeRunning variable divided by 1000 = seconds since program was uplodaded to microcontroller
     
     // JSON declaration variables
       String jsonstring = ""; // Used to send/receive JSON as string between layers
-      String jsonstring2 = ""; // Used to temporaly store the jsonstring at various sections in our code
+      String stringjson = ""; // Used to temporaly store the jsonstring at various sections in our code
       boolean SerialReady = false; // Used for handshake agreement when HMI Layer is to send data to Control Layer.
                                    // Needed to make sure we are listening on the serial port before the large JSON
                                    // data string is sent. Can be removed with larger serial receiver buffer....
@@ -96,7 +95,7 @@
 
   //Setup of JSON // JSON is used as our communication data interchange between layers 
   
-    StaticJsonDocument<325> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document
+    StaticJsonDocument<300> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document
     StaticJsonDocument<100> JsonSerialReady; // This will destroy and recreate the document
     
     void InitJsonMemory() { //Error "'JsonMemory' does not name a type" usually occurs when you try to use a variable outside of a function scope therefore it has its own function... run at void setup()...
@@ -117,7 +116,6 @@
       JsonMemory["counter"] = counter;
       JsonMemory["flow"] = flow;
       JsonMemory["overridemode"] = overridemode;
-      JsonMemory["error"] = error;
       JsonMemory["TimeInSequence"] = TimeInSequenceJSON;
       JsonMemory["TimeRunning"] = TimeRunningJSON;
     }
@@ -155,7 +153,6 @@ void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
     counter = JsonMemory["counter"];
     flow = JsonMemory["flow"].as<String>();
     overridemode = JsonMemory["overridemode"];
-    error = JsonMemory["error"].as<String>();
     
     JsonMemory["TimeInSequence"] = TimeInSequenceJSON; //Kept track on only in Arduino // Meaning is only declared/updated/changed in the  Arduino (Control Layer)
     JsonMemory["TimeRunning"] = TimeRunningJSON; //Kept track on only in Arduino // Meaning is only declared/updated/changed in the Arduino (Control Layer)
@@ -300,30 +297,28 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
     delay(10); // Just to keep it from going bananas
     }
     
-    delay(200);
+    delay(100);
     
     while (Serial.available() > 0) {
     c = (char)Serial.read(); // Read one character from the serial buffer
     jsonstring += c;
 
       if (Serial.available() == 0){
-        delay(200); //Just to make sure we get all data.
+        delay(100); //Just to make sure we get all data.
       }
     }
-    jsonstring2 = jsonstring; // stored as we will need data for ActuatorWrite() but we need to execute function RequestLogicForceFreezeRead() first.
+    stringjson = jsonstring; // stored as we will need data for ActuatorWrite() but we need to execute function RequestLogicForceFreezeRead() first.
 }
    
 //----------------------------------------------------------
 
 void ActuatorWrite() {
   // Check if any data was received
-    jsonstring = jsonstring2; // Data read from LogicForceFreezeRead();
+    jsonstring = stringjson; // Data read from LogicForceFreezeRead();
     
     if (jsonstring.length() > 0) {
       Serial.println(jsonstring);   
-      DeserializationError error = deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object. Note deserializeJson clear JsonMemory before writing jsonstring to it.      
-      
-      JsonMemory["error"] = error.c_str();
+      deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object. Note deserializeJson clear JsonMemory before writing jsonstring to it.      
       
       flow = "ActuatorWrite"; // Identification property // set by input to function.
       JsonMemory["flow"] = flow;
@@ -370,21 +365,20 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
     delay(10); // Just to keep it from going bananas
     }
     
-    delay(200);
+    delay(100);
     
     while (Serial.available() > 0) {
     c = (char)Serial.read(); // Read one character from the serial buffer
     jsonstring += c;
 
       if (Serial.available() == 0){
-        delay(200); //Just to make sure we get all data.
+        delay(100); //Just to make sure we get all data.
       }
     }
 
     // Check if any data was received
     if (jsonstring.length() > 0) {
-      DeserializationError error = deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object. Note deserializeJson clear JsonMemory before writing jsonstring to it.  
-      JsonMemory["error"] = error.c_str();
+      deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object. Note deserializeJson clear JsonMemory before writing jsonstring to it.  
       
       jsonstring = "";
      
@@ -400,39 +394,61 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
 // What we actually have added here is visualized in figure 9 in thesis document v1.0.
 
 void loop(){
-  delay(20000);
+  delay(30000);
 
   // Call our functions
 
     WriteInUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by SensorDataRead() // READ INPUT
+
+    delay(100);
     
     StateMachine(); // Control Logic // Calling main function for executing process logic sequence
+
+    delay(100);
     
   // Keep track of / Update - our time variables, see declaration for more info.
     TimeInSequenceJSON = TimeInSequence/1000; // s
     TimeRunningJSON = millis()/1000; // s
       
     WriteInUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by StateMachine() // UPDATE OUTPUT
+
+    delay(100);
     
     SensorLogicDataWrite(); // Step 2 // Calling function that sends data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
+
+    delay(100);
 
     //Step 3 - HMI Layer which includes the user interface with override functionality - Hosted in Node-RED. //The UI modifies the data sent to Node-RED in SensorLogicDataWrite() and returns the modified data in LogicForceFreezeRead()   
 
     RequestLogicForceFreezeRead(true); // Allow step 4 (LogicForceFreezeRead();) to begin by sending request of data to the HMI Layer (aka Node-RED) // set "gate" function node to true for allowed passage
+
+    delay(100);
     
     LogicForceFreezeRead(); // Step 4 // Calling function that sends data from HMI Layer to Control Layer.
 
+    delay(100);
+
     RequestLogicForceFreezeRead(false); // Stop step 4 from sending data without request from the HMI Layer to the Control Layer (aka Arduino) // set "gate" function node to false for blockage
 
+    delay(100);
+
     ActuatorWrite(); // Step 5 + Step 6 where we read in the Json string "LogicForceFreezeRead" from HMI Layer, change flow property (ID of json data) and send it out of the Control Layer again.
+
+    delay(100);
 
     //Step 7 - Process Layer -> Simulation of the process which as of v1.0 is hosted in node-RED in a function node. Send in ActuatorWrite() json data and process react to it as a real-process and return sensor data in json format in the SensorDataRead() function.   
     
     RequestSensorDataRead(true); // Allow step 8 (SensorDataRead();) to begin by sending request of data to the Process Layer (aka Node-RED for v1.0) // set "gate" function node to true for allowed passage
 
+    delay(100);
+
     SensorDataRead(); // Step 8 // Return sensor value which are updated by the simulated process hosted in a function node in node-RED (as of v1.0). 
+
+    delay(100);
     
     RequestSensorDataRead(false); // Stop step 8 from sending data without request from the Process Layer to the Control Layer (aka Arduino) // set "gate" function node to false for blockage
+
+    delay(100);
 
 }
 //-------------------------------------------------------------------------------------------------------------------//
@@ -442,6 +458,6 @@ void loop(){
 void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset
     
 //Serial communication setup
-  Serial.begin(4800); // //9600 baud per seconds (bits per seconds)
+  Serial.begin(9600); // //9600 baud per seconds (bits per seconds)
   delay(10000); // Wait until serial commuication is up and running before "starting" program.
 }
