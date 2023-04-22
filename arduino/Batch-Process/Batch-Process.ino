@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 22.04.2023 14:30
+// LAST UPDATE (roughly): 22.04.2023 14:55
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -94,6 +94,7 @@
     StaticJsonDocument<350> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
     
     StaticJsonDocument<100> JsonSerialReady; 
+    
     void InitJsonMemory() { //Error "'JsonMemory' does not name a type" usually occurs when you try to use a variable outside of a function scope therefore it has its own function... run at void setup()...
     //Iniziation of variables to be written to JsonMemory
       JsonMemory["start"] = start;
@@ -117,6 +118,37 @@
       JsonMemory["TimeRunning"] = TimeRunningJSON;
     }
         
+//-------------------------------------------------------------------------------------------------------------------//
+
+void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
+
+  // Step 1 - Write In Updated Variables updated by StateMachine() - (see Figure 9. from thesis document v1.0)
+  // Here we will update our variables which may have been given new values from the control logic code above.
+  // We write our variables into memory allocated to the StaticJsonDocument where it will be stored ready for transmission.
+  // Check declaration in top of code for explanation about the variables
+  
+  start = JsonMemory["start"];
+  stop1 = JsonMemory["stop1"];
+  stop2 = JsonMemory["stop2"];
+  heater = JsonMemory["heater"];
+  stirrer = JsonMemory["stirrer"];
+  valveA = JsonMemory["valveA"];
+  valveB = JsonMemory["valveB"];
+  valveC = JsonMemory["valveC"];
+  s1 = JsonMemory["s1"];
+  s2 = JsonMemory["s2"];
+  s3 = JsonMemory["s3"];
+  temp = JsonMemory["temp"];
+  state = JsonMemory["state"];
+  counter = JsonMemory["counter"];
+  flow = JsonMemory["flow"].as<String>();
+  overridemode = JsonMemory["overridemode"];
+  error = JsonMemory["error"].as<String>();
+  JsonMemory["TimeInSequence"] = TimeInSequenceJSON;
+  JsonMemory["TimeRunning"] = TimeRunningJSON;
+  
+}
+
 //-------------------------------------------------------------------------------------------------------------------//
 
 void StateMachine(){ // Main function for executing process logic sequence // Control Process Logic Loop (see Figure 8. in thesis document v1.0)
@@ -204,38 +236,6 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
       }
       break;
   }
-  
-}
-
-
-//-------------------------------------------------------------------------------------------------------------------//
-
-void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
-
-  // Step 1 - Write In Updated Variables updated by StateMachine() - (see Figure 9. from thesis document v1.0)
-  // Here we will update our variables which may have been given new values from the control logic code above.
-  // We write our variables into memory allocated to the StaticJsonDocument where it will be stored ready for transmission.
-  // Check declaration in top of code for explanation about the variables
-  
-  start = JsonMemory["start"];
-  stop1 = JsonMemory["stop1"];
-  stop2 = JsonMemory["stop2"];
-  heater = JsonMemory["heater"];
-  stirrer = JsonMemory["stirrer"];
-  valveA = JsonMemory["valveA"];
-  valveB = JsonMemory["valveB"];
-  valveC = JsonMemory["valveC"];
-  s1 = JsonMemory["s1"];
-  s2 = JsonMemory["s2"];
-  s3 = JsonMemory["s3"];
-  temp = JsonMemory["temp"];
-  state = JsonMemory["state"];
-  counter = JsonMemory["counter"];
-  flow = JsonMemory["flow"].as<String>();
-  overridemode = JsonMemory["overridemode"];
-  error = JsonMemory["error"].as<String>();
-  JsonMemory["TimeInSequence"] = TimeInSequenceJSON;
-  JsonMemory["TimeRunning"] = TimeRunningJSON;
   
 }
 
