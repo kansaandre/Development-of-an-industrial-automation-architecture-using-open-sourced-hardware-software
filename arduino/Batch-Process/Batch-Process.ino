@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 22.04.2023 18:40
+// LAST UPDATE (roughly): 22.04.2023 18:52
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -94,6 +94,10 @@
         uint16_t SerialTimeOut = 25000; // ms // If no data arrive within said timeout, we jump out of while loop.
 
   //Setup of JSON // JSON is used as our communication data interchange between layers 
+  
+    StaticJsonDocument<350> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document
+    StaticJsonDocument<100> JsonSerialReady; // This will destroy and recreate the document
+    
     void InitJsonMemory() { //Error "'JsonMemory' does not name a type" usually occurs when you try to use a variable outside of a function scope therefore it has its own function... run at void setup()...
     //Iniziation of variables to be written to JsonMemory
       JsonMemory["start"] = start;
@@ -128,6 +132,7 @@ void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
 
   // Initialize JSON 
     if (i == false){
+      JsonMemory.clear(); // Clear data stored in JsonMemory 
       InitJsonMemory(); // Function that initializes the JsonMemory object with the desired values only first time WriteInUpdatedVariables() is called
       i = true;
     }
@@ -266,7 +271,8 @@ void RequestLogicForceFreezeRead(boolean RequestOrderLogic) { // Allow step 4 to
   // Request sent to HMI Layer (Node-RED) as LogicForceFreezeRead JSON
     flow = "RequestLogicForceFreezeRead";
     SerialReady = RequestOrderLogic; // Ready to listen to serial line and read out "LogicForceFreezeRead". Due to size, it must be done directly and we can not "store" it in Serial Buffer (at least for UNO)...
-    
+
+    JsonSerialReady.clear(); // Clear data stored in JsonSerialReady
     JsonSerialReady["flow"] = flow; // Identification property of flow
     JsonSerialReady["SerialReady"] = SerialReady; // Signalling to Node-RED that we are ready to read serial data from it.
     
@@ -311,10 +317,8 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
 void ActuatorWrite() {
   // Check if any data was received
     if (jsonstring.length() > 0) {
-      
-      StaticJsonDocument<350> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document and is the recommended method to reuse JsonDocument
-      
-      DeserializationError error = deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object      
+            
+      DeserializationError error = deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object. Note deserializeJson clear JsonMemory before writing jsonstring to it.      
       
       JsonMemory["error"] = error.c_str();
       
@@ -338,6 +342,7 @@ void RequestSensorDataRead(boolean RequestOrderSensor) { // Allow step 4 to begi
     flow = "RequestSensorDataRead";
     SerialReady = RequestOrderSensor; // Ready to listen to serial line and read out "LogicForceFreezeRead". Due to size, it must be done directly and we can not "store" it in Serial Buffer (at least for UNO)...
     
+    JsonSerialReady.clear(); // Clear data stored in JsonSerialReady
     JsonSerialReady["flow"] = flow; // Identification property of flow
     JsonSerialReady["SerialReady"] = SerialReady; // Signalling to Node-RED that we are ready to read serial data from it.
     
@@ -375,8 +380,7 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
 
     // Check if any data was received
     if (jsonstring.length() > 0) {
-      StaticJsonDocument<350> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document and is the recommended method to reuse JsonDocument
-      DeserializationError error = deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object      
+      DeserializationError error = deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object. Note deserializeJson clear JsonMemory before writing jsonstring to it.  
       JsonMemory["error"] = error.c_str();
       
       jsonstring = "";
@@ -394,9 +398,6 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
 
 void loop(){
   delay(20000);
-
-  StaticJsonDocument<350> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document and is the recommended method to reuse JsonDocument
-  StaticJsonDocument<100> JsonSerialReady; // This will destroy and recreate the document and is the recommended method to reuse JsonDocument
 
   // Call our functions
 
