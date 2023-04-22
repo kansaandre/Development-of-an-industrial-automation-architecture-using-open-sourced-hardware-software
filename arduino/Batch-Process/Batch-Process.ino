@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 22.04.2023 17:58
+// LAST UPDATE (roughly): 22.04.2023 18:40
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -94,10 +94,6 @@
         uint16_t SerialTimeOut = 25000; // ms // If no data arrive within said timeout, we jump out of while loop.
 
   //Setup of JSON // JSON is used as our communication data interchange between layers 
-    StaticJsonDocument<350> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023)
-    
-    StaticJsonDocument<100> JsonSerialReady;
-
     void InitJsonMemory() { //Error "'JsonMemory' does not name a type" usually occurs when you try to use a variable outside of a function scope therefore it has its own function... run at void setup()...
     //Iniziation of variables to be written to JsonMemory
       JsonMemory["start"] = start;
@@ -154,8 +150,8 @@ void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
     flow = JsonMemory["flow"].as<String>();
     overridemode = JsonMemory["overridemode"];
     error = JsonMemory["error"].as<String>();
-    JsonMemory["TimeInSequence"] = TimeInSequenceJSON;
-    JsonMemory["TimeRunning"] = TimeRunningJSON;
+    JsonMemory["TimeInSequence"] = TimeInSequenceJSON; //Kept track on only in Arduino // Meaning is only declared/updated/changed in Arduino (Control Layer)
+    JsonMemory["TimeRunning"] = TimeRunningJSON; //Kept track on only in Arduino // Meaning is only declared/updated/changed in Arduino (Control Layer)
 }
 
 //-------------------------------------------------------------------------------------------------------------------//
@@ -260,6 +256,7 @@ void SensorLogicDataWrite() { // Step 2 (figure 9. thesis document v1.0)
     
     serializeJson(JsonMemory, jsonstring); // Function that converts JSON object to a string.
     Serial.println(jsonstring); // Function that prints text to the Serial Monitor.
+    Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
     
 }
 
@@ -277,6 +274,7 @@ void RequestLogicForceFreezeRead(boolean RequestOrderLogic) { // Allow step 4 to
     
     serializeJson(JsonSerialReady, jsonstring); // Function that converts JSON object to a string.
     Serial.println(jsonstring); // Function that prints text to the Serial Monitor.
+    Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
 }
 
 //----------------------------------------------------------
@@ -305,6 +303,7 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
       }
     }
     Serial.println(jsonstring);
+    Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
 }
 
 //----------------------------------------------------------
@@ -312,16 +311,22 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
 void ActuatorWrite() {
   // Check if any data was received
     if (jsonstring.length() > 0) {
-      deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object
+      
+      StaticJsonDocument<350> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document and is the recommended method to reuse JsonDocument
+      
+      DeserializationError error = deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object      
+      
+      JsonMemory["error"] = error.c_str();
+      
       flow = "ActuatorWrite"; // Identification property // set by input to function.
       JsonMemory["flow"] = flow;
-      JsonMemory["error"] = "Ok";
       
       jsonstring = "";
       
       serializeJson(JsonMemory, jsonstring);
       Serial.println(jsonstring);
       Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
+      
     } else {
       Serial.println("No data recieved from HMI Layer"); // Just for easy debugging in HMI Layer (node-red)
       }
@@ -340,6 +345,8 @@ void RequestSensorDataRead(boolean RequestOrderSensor) { // Allow step 4 to begi
     
     serializeJson(JsonSerialReady, jsonstring); // Function that converts JSON object to a string.
     Serial.println(jsonstring); // Function that prints text to the Serial Monitor.
+    Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
+
 }
 //----------------------------------------------------------
 
@@ -368,8 +375,9 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
 
     // Check if any data was received
     if (jsonstring.length() > 0) {
-      deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object      
-      JsonMemory["error"] = "Ok";
+      StaticJsonDocument<350> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document and is the recommended method to reuse JsonDocument
+      DeserializationError error = deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object      
+      JsonMemory["error"] = error.c_str();
       
       jsonstring = "";
      
@@ -387,8 +395,8 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
 void loop(){
   delay(20000);
 
-  JsonMemory.clear(); // Clear JsonMemory // Done to have the document globally declared https://arduinojson.org/v6/how-to/reuse-a-json-document/
-  JsonSerialReady.clear(); // Clear JsonSerialReady // Done to have the document globally declared https://arduinojson.org/v6/how-to/reuse-a-json-document/
+  StaticJsonDocument<350> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document and is the recommended method to reuse JsonDocument
+  StaticJsonDocument<100> JsonSerialReady; // This will destroy and recreate the document and is the recommended method to reuse JsonDocument
 
   // Call our functions
 
