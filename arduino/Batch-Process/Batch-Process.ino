@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 23.04.2023 16:10
+// LAST UPDATE (roughly): 23.04.2023 17:44
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -297,17 +297,15 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
     delay(10); // Just to keep it from going bananas
     }
     
-    delay(250);
-    
     while (Serial.available() > 0) {
-    c = (char)Serial.read(); // Read one character from the serial buffer
-    jsonstring += c;
-    delay(10);
-
-      if (Serial.available() == 0){
-        delay(250); //Just to make sure we get all data.
+      c = (char)Serial.read(); // Read one character from the serial buffer
+    
+      if (c == '\n') { // Check for the newline character, indicating the end of data
+        break;
       }
-    }
+    
+      jsonstring += c;
+  }
     stringjson = jsonstring; // stored as we will need data for ActuatorWrite() but we need to execute function RequestLogicForceFreezeRead() first.
 }
    
@@ -363,20 +361,18 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
     
     while ((Serial.available() == 0) and (millis() - SerialWait < SerialTimeOut)) {
     // Do nothing; just wait for data
-    delay(10); // Just to keep it from going bananas
+      delay(10); // Just to keep it from going bananas
     }
-    
-    delay(250);
     
     while (Serial.available() > 0) {
-    c = (char)Serial.read(); // Read one character from the serial buffer
-    jsonstring += c;
-    delay(10);
-
-      if (Serial.available() == 0){
-        delay(250); //Just to make sure we get all data.
+      c = (char)Serial.read(); // Read one character from the serial buffer
+    
+      if (c == '\n') { // Check for the newline character, indicating the end of data
+        break;
       }
-    }
+    
+      jsonstring += c;
+  }
 
     // Check if any data was received
     if (jsonstring.length() > 0) {
