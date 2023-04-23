@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 23.04.2023 18:00
+// LAST UPDATE (roughly): 23.04.2023 22:54
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -289,7 +289,7 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
   // - but update our variables from the user interface inputs.
    
   // Listen to serial port and read out JSON data from HMI Layer
-    jsonstring = ""; // clear jsonstring
+    stringjson = ""; // clear jsonstring
     SerialWait = millis(); // set it to current time used to track time since we began listening for data from HMI layer (Node-RED) at serial port
     
     while ((Serial.available() == 0) and (millis() - SerialWait < SerialTimeOut)) {
@@ -297,32 +297,42 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
     delay(10); // Just to keep it from going bananas
     }
 
-    delay(250);
+    delay(500); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
     
     while (Serial.available() > 0) {
       c = (char)Serial.read(); // Read one character from the serial buffer
-      jsonstring += c;
+      stringjson += c;
   }
-    stringjson = jsonstring; // stored as we will need data for ActuatorWrite() but we need to execute function RequestLogicForceFreezeRead() first.
+
+    delay(500);
+    
+    Serial.println(stringjson);   
+    Serial.flush();
+
+    while (Serial.available() > 0) { // Clear serial buffer
+      Serial.read();
+    }
+        
+    //stringjson = jsonstring; // stored as we will need data for ActuatorWrite() but we need to execute function RequestLogicForceFreezeRead() first.
 }
    
 //----------------------------------------------------------
 
 void ActuatorWrite() {
   // Check if any data was received
-    jsonstring = stringjson; // Data read from LogicForceFreezeRead();
+  //  jsonstring = stringjson; // Data read from LogicForceFreezeRead();
     
-    if (jsonstring.length() > 0) {
-      Serial.println(jsonstring);   
-      deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object. Note deserializeJson clear JsonMemory before writing jsonstring to it.      
+    if (stringjson.length() > 0) {
+      Serial.println(stringjson);   
+      deserializeJson(JsonMemory, stringjson); // Store serial data string in JSON memory, effectively making it into a JSON object. Note deserializeJson clear JsonMemory before writing stringjson to it.      
       
       flow = "ActuatorWrite"; // Identification property // set by input to function.
       JsonMemory["flow"] = flow;
       
-      jsonstring = "";
+      stringjson = "";
       
-      serializeJson(JsonMemory, jsonstring);
-      Serial.println(jsonstring);
+      serializeJson(JsonMemory, stringjson);
+      Serial.println(stringjson);
       Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
       
     } else {
@@ -361,12 +371,13 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
       delay(10); // Just to keep it from going bananas
     }
 
-    delay(250);
+    delay(500); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
     
     while (Serial.available() > 0) {
       c = (char)Serial.read(); // Read one character from the serial buffer
       jsonstring += c;
   }
+    delay(500);
 
     // Check if any data was received
     if (jsonstring.length() > 0) {

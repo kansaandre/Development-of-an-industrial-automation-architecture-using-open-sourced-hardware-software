@@ -518,8 +518,8 @@
         "y": 540,
         "wires": [
             [
-                "751b4c1bf8d62bd1",
-                "858f2294df94bfe9"
+                "858f2294df94bfe9",
+                "751b4c1bf8d62bd1"
             ]
         ]
     },
@@ -682,7 +682,7 @@
         "property": "payload",
         "action": "str",
         "pretty": false,
-        "x": 1430,
+        "x": 1410,
         "y": 180,
         "wires": [
             [
@@ -1113,6 +1113,16 @@
         "statusType": "auto",
         "x": 540,
         "y": 560,
+        "wires": []
+    },
+    {
+        "id": "688421a93590b00d",
+        "type": "comment",
+        "z": "5876467d554e446b",
+        "name": "Last updated 23.04.2023 16:10 by Andre N.K. Kansa",
+        "info": "",
+        "x": 210,
+        "y": 60,
         "wires": []
     }
 ]
