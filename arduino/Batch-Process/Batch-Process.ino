@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 23.04.2023 22:54
+// LAST UPDATE (roughly): 23.04.2023 23:30
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -19,7 +19,7 @@
 
 #include <ArduinoJson.h> // v6 used in v1.0 // https://arduinojson.org/ // JSON data compatability with Arduino
 
-//Enter "sudo nano /usr/share/arduino/hardware/arduino/avr/cores/arduino/HardwareSerial.h" and change from the default 64 byte buffer size (for UNO anyway) to 350 bytes by changing "#define SERIAL_RX_BUFFER_SIZE 350"
+//Enter "sudo nano /usr/share/arduino/hardware/arduino/avr/cores/arduino/HardwareSerial.h" and change from the default 64 byte buffer size (for UNO anyway) to 300 bytes by changing "#define SERIAL_RX_BUFFER_SIZE 300"
   //This is neccessary to be able to receive the large JSON data string we are receving from the HMI layer (aka Node-RED)...
 
 //-------------------------------------------------------------------------------------------------------------------//
@@ -54,7 +54,6 @@
     
     // JSON declaration variables
       String jsonstring = ""; // Used to send/receive JSON as string between layers
-      String stringjson = ""; // Used to temporaly store the jsonstring at various sections in our code
       boolean SerialReady = false; // Used for handshake agreement when HMI Layer is to send data to Control Layer.
                                    // Needed to make sure we are listening on the serial port before the large JSON
                                    // data string is sent. Can be removed with larger serial receiver buffer....
@@ -289,7 +288,7 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
   // - but update our variables from the user interface inputs.
    
   // Listen to serial port and read out JSON data from HMI Layer
-    stringjson = ""; // clear jsonstring
+    jsonstring = ""; // clear jsonstring
     SerialWait = millis(); // set it to current time used to track time since we began listening for data from HMI layer (Node-RED) at serial port
     
     while ((Serial.available() == 0) and (millis() - SerialWait < SerialTimeOut)) {
@@ -301,37 +300,31 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
     
     while (Serial.available() > 0) {
       c = (char)Serial.read(); // Read one character from the serial buffer
-      stringjson += c;
+      jsonstring += c;
   }
 
     delay(500);
-    
-    Serial.println(stringjson);   
-    Serial.flush();
 
-    while (Serial.available() > 0) { // Clear serial buffer
-      Serial.read();
-    }
-        
-    //stringjson = jsonstring; // stored as we will need data for ActuatorWrite() but we need to execute function RequestLogicForceFreezeRead() first.
+    
+  if (jsonstring.length() > 0) {
+    deserializeJson(JsonMemory, stringjson); // Store serial data string in JSON memory, effectively making it into a JSON object. Note deserializeJson clear JsonMemory before writing stringjson to it.   
+
+    Serial.println(jsonstring);  
+    Serial.flush(); 
+  }
 }
    
 //----------------------------------------------------------
 
 void ActuatorWrite() {
   // Check if any data was received
-  //  jsonstring = stringjson; // Data read from LogicForceFreezeRead();
-    
-    if (stringjson.length() > 0) {
-      Serial.println(stringjson);   
-      deserializeJson(JsonMemory, stringjson); // Store serial data string in JSON memory, effectively making it into a JSON object. Note deserializeJson clear JsonMemory before writing stringjson to it.      
-      
+ 
       flow = "ActuatorWrite"; // Identification property // set by input to function.
-      JsonMemory["flow"] = flow;
+      JsonMemory["flow"] = flow;  // Identification property // set by input to function.
       
-      stringjson = "";
+      jsonstring = ""; // clear jsonstring in case something already is on it.
       
-      serializeJson(JsonMemory, stringjson);
+      serializeJson(JsonMemory, stringjson); // JsonMemory set in LogicForceFreezeRead()
       Serial.println(stringjson);
       Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
       
