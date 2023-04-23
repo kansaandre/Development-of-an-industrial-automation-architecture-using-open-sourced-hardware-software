@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 23.04.2023 23:30
+// LAST UPDATE (roughly): 24.04.2023 01:35
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -80,7 +80,7 @@
       unsigned long current_time; // ms // Used to track time for a condition in one state in our StateMachine function
       unsigned long TimeInSequence; // ms // Track time since we were last in state: Ready (meaning time since sequence begun)
       //(millis() - EntryTime) < TimeOut) Exit conditions to compensate for blocking code in our StateMachine()
-        const uint16_t TimeOut = 1000; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
+        const uint16_t TimeOut = 2000; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
         uint32_t EntryTime; // ms // Start tracking time as soon as we enter a state so we know how long we been there.
         
     //LogicForceFreezeRead()
@@ -135,7 +135,7 @@ void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
       i = true;
     }
 
-  // Read updated variables which has been updated by either the SensorDataRead() (updating INPUTS before StateMachine() run) or by the StateMachine() itself (updating OUTPUTS to be sent to HMI Layer) 
+  // Read updated variables which has been updated by the SensorDataRead() (updating INPUTS before StateMachine())
     start = JsonMemory["start"];
     stop1 = JsonMemory["stop1"];
     stop2 = JsonMemory["stop2"];
@@ -245,16 +245,44 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
       break;
   } 
 }
+//----------------------------------------------------------
+
+void WriteOutUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
+
+  // Step 1 - Write In Updated Variables updated - (see Figure 9. from thesis document v1.0)
+  // Here we will update our variables found in Arduino code before and after control code, StateMAchine(), is called. 
+  // We write our variables into memory allocated to the StaticJsonDocument where it will be stored ready for transmission.
+  // Check declaration in top of code for explanation about the variables
+
+
+  // Read updated variables which has been updated by the SensorDataRead() (updating INPUTS before StateMachine())
+    JsonMemory["start"] = start;
+    JsonMemory["stop1"] = stop1;
+    JsonMemory["stop2"] = stop2;
+    JsonMemory["heater"] = heater;
+    JsonMemory["stirrer"] = stirrer;
+    JsonMemory["valveA"] = valveA;
+    JsonMemory["valveB"] = valveB;
+    JsonMemory["valveC"] = valveC;
+    JsonMemory["s1"] = s1;
+    JsonMemory["s2"] = s2;
+    JsonMemory["s3"] = s3;
+    JsonMemory["temp"] = temp;
+    JsonMemory["state"] = state;
+    JsonMemory["counter"] = counter;
+    JsonMemory["flow"] = flow;
+    JsonMemory["overridemode"] = overridemode;   
+    JsonMemory["TimeInSequence"] = TimeInSequenceJSON; //Kept track on only in Arduino // Meaning is only declared/updated/changed in the  Arduino (Control Layer)
+    JsonMemory["TimeRunning"] = TimeRunningJSON; //Kept track on only in Arduino // Meaning is only declared/updated/changed in the Arduino (Control Layer)
+}
 
 //----------------------------------------------------------
 
 void SensorLogicDataWrite() { // Step 2 (figure 9. thesis document v1.0)
 
   // Sensor & Logic data write - Send data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
-
-    flow = "SensorLogicDataWrite"; // Identification property in our JSON data // used with figure 9. from thesis document v1.0.
-    JsonMemory["flow"] = flow;
-    
+  
+    JsonMemory["flow"] = "SensorLogicDataWrite"; // Identification property in our JSON data // used with figure 9. from thesis document v1.0.    
     jsonstring = ""; // clear jsonstring
     
     serializeJson(JsonMemory, jsonstring); // Function that converts JSON object to a string.
@@ -267,11 +295,10 @@ void SensorLogicDataWrite() { // Step 2 (figure 9. thesis document v1.0)
 
 void RequestLogicForceFreezeRead(boolean RequestOrderLogic) { // Allow step 4 to begin by sending request of data to the HMI Layer (aka Node-RED)
   // Request sent to HMI Layer (Node-RED) as LogicForceFreezeRead JSON
-    flow = "RequestLogicForceFreezeRead";
     SerialReady = RequestOrderLogic; // Ready to listen to serial line and read out "LogicForceFreezeRead". Due to size, it must be done directly and we can not "store" it in Serial Buffer (at least for UNO)...
 
     JsonSerialReady.clear(); // Clear data stored in JsonSerialReady
-    JsonSerialReady["flow"] = flow; // Identification property of flow
+    JsonSerialReady["flow"] = "RequestLogicForceFreezeRead"; // Identification property of flow
     JsonSerialReady["SerialReady"] = SerialReady; // Signalling to Node-RED that we are ready to read serial data from it.
     
     jsonstring = ""; // clear jsonstring
@@ -296,51 +323,46 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
     delay(10); // Just to keep it from going bananas
     }
 
-    delay(500); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
+    delay(250); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
     
     while (Serial.available() > 0) {
       c = (char)Serial.read(); // Read one character from the serial buffer
       jsonstring += c;
   }
 
-    delay(500);
+    delay(250); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
 
     
   if (jsonstring.length() > 0) {
-    deserializeJson(JsonMemory, stringjson); // Store serial data string in JSON memory, effectively making it into a JSON object. Note deserializeJson clear JsonMemory before writing stringjson to it.   
+    deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object. Note deserializeJson clear JsonMemory before writing jsonstring to it.   
 
     Serial.println(jsonstring);  
     Serial.flush(); 
-  }
+  } else {
+      Serial.println("No data recieved from HMI Layer"); // Just for easy debugging in HMI Layer (node-red)
+      }
 }
    
 //----------------------------------------------------------
 
 void ActuatorWrite() {
-  // Check if any data was received
- 
-      flow = "ActuatorWrite"; // Identification property // set by input to function.
-      JsonMemory["flow"] = flow;  // Identification property // set by input to function.
-      
+    
+      JsonMemory["flow"] = "ActuatorWrite";  // Identification property // set by input to function.
       jsonstring = ""; // clear jsonstring in case something already is on it.
       
-      serializeJson(JsonMemory, stringjson); // JsonMemory set in LogicForceFreezeRead()
-      Serial.println(stringjson);
+      serializeJson(JsonMemory, jsonstring); // JsonMemory set in LogicForceFreezeRead()
+      Serial.println(jsonstring);
       Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
-      
-    } else {
-      Serial.println("No data recieved from HMI Layer"); // Just for easy debugging in HMI Layer (node-red)
-      }
+
 }
 
 //----------------------------------------------------------
 void RequestSensorDataRead(boolean RequestOrderSensor) { // Allow step 4 to begin by sending request of data to the HMI Layer (aka Node-RED)
   // Request sent to HMI Layer (Node-RED) as LogicForceFreezeRead JSON
-    flow = "RequestSensorDataRead";
     SerialReady = RequestOrderSensor; // Ready to listen to serial line and read out "LogicForceFreezeRead". Due to size, it must be done directly and we can not "store" it in Serial Buffer (at least for UNO)...
     
     JsonSerialReady.clear(); // Clear data stored in JsonSerialReady
-    JsonSerialReady["flow"] = flow; // Identification property of flow
+    JsonSerialReady["flow"] = "RequestSensorDataRead"; // Identification property of flow
     JsonSerialReady["SerialReady"] = SerialReady; // Signalling to Node-RED that we are ready to read serial data from it.
     
     jsonstring = ""; // clear jsonstring
@@ -364,13 +386,13 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
       delay(10); // Just to keep it from going bananas
     }
 
-    delay(500); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
+    delay(250); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
     
     while (Serial.available() > 0) {
       c = (char)Serial.read(); // Read one character from the serial buffer
       jsonstring += c;
   }
-    delay(500);
+    delay(250); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
 
     // Check if any data was received
     if (jsonstring.length() > 0) {
@@ -390,7 +412,7 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
 // What we actually have added here is visualized in figure 9 in thesis document v1.0.
 
 void loop(){
-  delay(30000);
+  //delay(0);
 
   // Call our functions
 
@@ -402,7 +424,7 @@ void loop(){
     TimeInSequenceJSON = TimeInSequence/1000; // s
     TimeRunningJSON = millis()/1000; // s
       
-    WriteInUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by StateMachine() // UPDATE OUTPUT
+    WriteOutUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by StateMachine() // UPDATE OUTPUT
     
     SensorLogicDataWrite(); // Step 2 // Calling function that sends data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
 
@@ -432,6 +454,6 @@ void loop(){
 void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset
     
 //Serial communication setup
-  Serial.begin(9600); // //9600 baud per seconds (bits per seconds)
-  delay(10000); // Wait until serial commuication is up and running before "starting" program.
+  Serial.begin(38400); // //9600 baud per seconds (bits per seconds)
+  delay(20000); // Wait until serial commuication is up and running before "starting" program.
 }
