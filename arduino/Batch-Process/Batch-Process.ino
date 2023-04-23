@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 22.04.2023 22:30
+// LAST UPDATE (roughly): 23.04.2023 16:10
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -297,14 +297,15 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
     delay(10); // Just to keep it from going bananas
     }
     
-    delay(100);
+    delay(250);
     
     while (Serial.available() > 0) {
     c = (char)Serial.read(); // Read one character from the serial buffer
     jsonstring += c;
+    delay(10);
 
       if (Serial.available() == 0){
-        delay(100); //Just to make sure we get all data.
+        delay(250); //Just to make sure we get all data.
       }
     }
     stringjson = jsonstring; // stored as we will need data for ActuatorWrite() but we need to execute function RequestLogicForceFreezeRead() first.
@@ -365,14 +366,15 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
     delay(10); // Just to keep it from going bananas
     }
     
-    delay(100);
+    delay(250);
     
     while (Serial.available() > 0) {
     c = (char)Serial.read(); // Read one character from the serial buffer
     jsonstring += c;
+    delay(10);
 
       if (Serial.available() == 0){
-        delay(100); //Just to make sure we get all data.
+        delay(250); //Just to make sure we get all data.
       }
     }
 
@@ -399,58 +401,36 @@ void loop(){
   // Call our functions
 
     WriteInUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by SensorDataRead() // READ INPUT
-
-    delay(100);
     
     StateMachine(); // Control Logic // Calling main function for executing process logic sequence
-
-    delay(100);
     
   // Keep track of / Update - our time variables, see declaration for more info.
     TimeInSequenceJSON = TimeInSequence/1000; // s
     TimeRunningJSON = millis()/1000; // s
       
     WriteInUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by StateMachine() // UPDATE OUTPUT
-
-    delay(100);
     
     SensorLogicDataWrite(); // Step 2 // Calling function that sends data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
-
-    delay(100);
 
     //Step 3 - HMI Layer which includes the user interface with override functionality - Hosted in Node-RED. //The UI modifies the data sent to Node-RED in SensorLogicDataWrite() and returns the modified data in LogicForceFreezeRead()   
 
     RequestLogicForceFreezeRead(true); // Allow step 4 (LogicForceFreezeRead();) to begin by sending request of data to the HMI Layer (aka Node-RED) // set "gate" function node to true for allowed passage
-
-    delay(100);
     
     LogicForceFreezeRead(); // Step 4 // Calling function that sends data from HMI Layer to Control Layer.
 
-    delay(100);
-
     RequestLogicForceFreezeRead(false); // Stop step 4 from sending data without request from the HMI Layer to the Control Layer (aka Arduino) // set "gate" function node to false for blockage
-
-    delay(100);
-
+    
     ActuatorWrite(); // Step 5 + Step 6 where we read in the Json string "LogicForceFreezeRead" from HMI Layer, change flow property (ID of json data) and send it out of the Control Layer again.
-
-    delay(100);
 
     //Step 7 - Process Layer -> Simulation of the process which as of v1.0 is hosted in node-RED in a function node. Send in ActuatorWrite() json data and process react to it as a real-process and return sensor data in json format in the SensorDataRead() function.   
     
     RequestSensorDataRead(true); // Allow step 8 (SensorDataRead();) to begin by sending request of data to the Process Layer (aka Node-RED for v1.0) // set "gate" function node to true for allowed passage
-
-    delay(100);
-
+    
     SensorDataRead(); // Step 8 // Return sensor value which are updated by the simulated process hosted in a function node in node-RED (as of v1.0). 
-
-    delay(100);
     
     RequestSensorDataRead(false); // Stop step 8 from sending data without request from the Process Layer to the Control Layer (aka Arduino) // set "gate" function node to false for blockage
-
-    delay(100);
-
 }
+
 //-------------------------------------------------------------------------------------------------------------------//
 
 //Setup of interrupt in our timer1 lib as well as serial commuication
