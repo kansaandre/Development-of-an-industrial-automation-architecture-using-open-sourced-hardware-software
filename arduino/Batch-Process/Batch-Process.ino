@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 24.04.2023 01:35
+// LAST UPDATE (roughly): 24.04.2023 02:06
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -79,8 +79,9 @@
     //StateMachine()
       unsigned long current_time; // ms // Used to track time for a condition in one state in our StateMachine function
       unsigned long TimeInSequence; // ms // Track time since we were last in state: Ready (meaning time since sequence begun)
+      int8_t previousState = -1;
       //(millis() - EntryTime) < TimeOut) Exit conditions to compensate for blocking code in our StateMachine()
-        const uint16_t TimeOut = 2000; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
+        const uint16_t TimeOut = 500; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
         uint32_t EntryTime; // ms // Start tracking time as soon as we enter a state so we know how long we been there.
         
     //LogicForceFreezeRead()
@@ -90,7 +91,7 @@
 
       //(millis()-SerialWait < SerialTimeOut) Exit condition when serial listening for reading JSON data from outside layer commuication 
         unsigned long SerialWait; // ms // Set when we begin listening on serial port
-        uint16_t SerialTimeOut = 25000; // ms // If no data arrive within said timeout, we jump out of while loop.
+        uint16_t SerialTimeOut = 5000; // ms // If no data arrive within said timeout, we jump out of while loop.
 
   //Setup of JSON // JSON is used as our communication data interchange between layers 
   
@@ -124,8 +125,9 @@
 void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
 
   // Step 1 - Write In Updated Variables updated - (see Figure 9. from thesis document v1.0)
-  // Here we will update our variables found in Arduino code before and after control code, StateMAchine(), is called. 
-  // We write our variables into memory allocated to the StaticJsonDocument where it will be stored ready for transmission.
+  // Here we will update our variables found in Arduino code before StateMachine(), is called. 
+  // This is similar to PLC where we update our variables from the process before running the main program.
+  // We write our variables into memory allocated to the StaticJsonDocument where it will be stored.
   // Check declaration in top of code for explanation about the variables
 
   // Initialize JSON 
@@ -161,11 +163,20 @@ void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
 
 void StateMachine(){ // Main function for executing process logic sequence // Control Process Logic Loop (see Figure 8. in thesis document v1.0)
 
-    if (state == ready){
-    TimeInSequence = 0; // Reset sequence time tracker
+  if (state == ready){
+  TimeInSequence = 0; // Reset sequence time tracker
   } else if ((state != ready) and (state != pause)){
-    TimeInSequence = millis()- TimeInSequence; // Update time spent in sequence (Time since sketch was uploaded - Time since start button was pressed)
-    } 
+  TimeInSequence = millis()- TimeInSequence; // Update time spent in sequence (Time since sketch was uploaded - Time since start button was pressed)
+  } 
+
+// Check if the state has not changed since the last call and skip the switch statement
+  if (previousState == state) {
+      return;
+  }
+  
+  previousState = state; // Update previousState with the current state before executing the switch statement
+
+    
     
   switch (state) {
     case ready:
@@ -249,9 +260,10 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
 
 void WriteOutUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
 
-  // Step 1 - Write In Updated Variables updated - (see Figure 9. from thesis document v1.0)
-  // Here we will update our variables found in Arduino code before and after control code, StateMAchine(), is called. 
-  // We write our variables into memory allocated to the StaticJsonDocument where it will be stored ready for transmission.
+  // Step 1 - Write Out Updated Variables updated - (see Figure 9. from thesis document v1.0)
+  // Here we will update our variables found in Arduino code after control code, StateMachine(), is called. 
+  // This is similar to PLC where we update variables after running main program.
+  // We write our variables into memory allocated to the StaticJsonDocument where it will be stored.
   // Check declaration in top of code for explanation about the variables
 
 
@@ -323,14 +335,14 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
     delay(10); // Just to keep it from going bananas
     }
 
-    delay(250); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
+    delay(100); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
     
     while (Serial.available() > 0) {
       c = (char)Serial.read(); // Read one character from the serial buffer
       jsonstring += c;
   }
 
-    delay(250); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
+    delay(100); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
 
     
   if (jsonstring.length() > 0) {
@@ -386,13 +398,13 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
       delay(10); // Just to keep it from going bananas
     }
 
-    delay(250); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
+    delay(100); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
     
     while (Serial.available() > 0) {
       c = (char)Serial.read(); // Read one character from the serial buffer
       jsonstring += c;
   }
-    delay(250); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
+    delay(100); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
 
     // Check if any data was received
     if (jsonstring.length() > 0) {
@@ -454,6 +466,6 @@ void loop(){
 void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset
     
 //Serial communication setup
-  Serial.begin(38400); // //9600 baud per seconds (bits per seconds)
+  Serial.begin(57600); // //9600 baud per seconds (bits per seconds)
   delay(20000); // Wait until serial commuication is up and running before "starting" program.
 }
