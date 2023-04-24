@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 25.04.2023 00:51
+// LAST UPDATE (roughly): 25.04.2023 01:22
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -270,11 +270,13 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
   } else if ((state != ready) and (state != pause)){
     TimeInSequence = millis()- TimeInSequence; // Update time spent in sequence (Time since sketch was uploaded - Time since start button was pressed)
     } 
-}
 
   // Keep track of / Update - our time variables, see declaration for more info.
     TimeInSequenceJSON = TimeInSequence/1000; // s
     TimeRunningJSON = millis()/1000; // s
+}
+
+  
 
 //----------------------------------------------------------
 
