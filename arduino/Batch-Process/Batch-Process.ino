@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 24.04.2023 02:06
+// LAST UPDATE (roughly): 25.04.2023 00:51
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -79,7 +79,7 @@
     //StateMachine()
       unsigned long current_time; // ms // Used to track time for a condition in one state in our StateMachine function
       unsigned long TimeInSequence; // ms // Track time since we were last in state: Ready (meaning time since sequence begun)
-      int8_t previousState = -1;
+      int8_t PreviousState = -1;
       //(millis() - EntryTime) < TimeOut) Exit conditions to compensate for blocking code in our StateMachine()
         const uint16_t TimeOut = 500; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
         uint32_t EntryTime; // ms // Start tracking time as soon as we enter a state so we know how long we been there.
@@ -155,107 +155,127 @@ void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
     flow = JsonMemory["flow"].as<String>();
     overridemode = JsonMemory["overridemode"];
     
-    JsonMemory["TimeInSequence"] = TimeInSequenceJSON; //Kept track on only in Arduino // Meaning is only declared/updated/changed in the  Arduino (Control Layer)
-    JsonMemory["TimeRunning"] = TimeRunningJSON; //Kept track on only in Arduino // Meaning is only declared/updated/changed in the Arduino (Control Layer)
 }
 
 //-------------------------------------------------------------------------------------------------------------------//
 
 void StateMachine(){ // Main function for executing process logic sequence // Control Process Logic Loop (see Figure 8. in thesis document v1.0)
-
-  if (state == ready){
-  TimeInSequence = 0; // Reset sequence time tracker
-  } else if ((state != ready) and (state != pause)){
-  TimeInSequence = millis()- TimeInSequence; // Update time spent in sequence (Time since sketch was uploaded - Time since start button was pressed)
-  } 
-
-// Check if the state has not changed since the last call and skip the switch statement
-  if (previousState == state) {
-      return;
-  }
-  
-  previousState = state; // Update previousState with the current state before executing the switch statement
-
-    
-    
-  switch (state) {
-    case ready:
-      EntryTime = millis();
-      while ((millis() - EntryTime) < TimeOut) {
-        if (start) {
+      
+  switch (state) { 
+//----------   
+    case ready: // The step instructions 
+      
+      EntryTime = millis(); // Write down time when we first entered case block
+      
+      if ((millis() - EntryTime) < TimeOut) { // Condition to hinder block to get stuck
+        if (start) { // Condition to change state (the transition) 
           TimeInSequence = millis(); // Set equal to time we "started" our sequence
           state = fill_A; // Change state to fill_A when start button is pressed
         }
       }
-      break;
-
-    case fill_A:
-      EntryTime = millis();
-      while ((millis() - EntryTime) < TimeOut) {
-        counter++; // Increase counter for each sequence loop
-        valveA = true; // Open inlet valve A for chemical A
-        if (!s2 || stop2) {
+      break; // Break out of case and move on in the StateMachine() function
+//----------
+    case fill_A: // The step instructions  
+      
+      EntryTime = millis(); // Write down time when we first entered case block
+      
+      if ((millis() - EntryTime) < TimeOut) { // Condition to hinder block to get stuck
+        if (state != PreviousState){ // Instructions below are only to be done the first time state has been set
+          counter++; // Increase counter for each sequence loop        
+          valveA = true; // Open inlet valve A for chemical A
+        }
+        if (!s2 || stop2) { // Condition to change state (the transition) 
           state = fill_B; // Change state to fill_B when medium level indicator in the tank is reached or stop2 is true
         }
-      }
-      break;
-
-    case fill_B:
-      EntryTime = millis();
-      while ((millis() - EntryTime) < TimeOut) {
-        valveA = false; // Close valve A
-        valveB = true; // Open inlet valve B for chemical B
-        stirrer = true; // Start stirrer for mixing chemicals A and B
-        heater = true; // Start heater for warming up the mixture
-        if (!s3 || stop2) {
+      } 
+      break; // Break out of case and move on in the StateMachine() function
+//----------
+    case fill_B: // The step instructions 
+   
+      EntryTime = millis(); // Write down time when we first entered case block
+      
+      if ((millis() - EntryTime) < TimeOut) { // Condition to hinder block to get stuck
+        if (state != PreviousState){ // Instructions below are only to be done the first time state has been set
+          valveA = false; // Close valve A
+          valveB = true; // Open inlet valve B for chemical B
+          stirrer = true; // Start stirrer for mixing chemicals A and B
+          heater = true; // Start heater for warming up the mixture
+        } 
+        if (!s3 || stop2) { // Condition to change state (the transition) 
           state = heating; // Change state to heating when high level indicator in the tank is reached or stop2 is true
         }
       }
-      break;
-
-    case heating:
-      EntryTime = millis();
-      while ((millis() - EntryTime) < TimeOut) {
-        if (temp >= 85 || stop2) {
+      break; // Break out of case and move on in the StateMachine() function
+//----------
+    case heating: // The step instructions
+     
+      EntryTime = millis(); // Write down time when we first entered case block
+      
+      if ((millis() - EntryTime) < TimeOut) { // Condition to hinder block to get stuck
+        if (temp >= 85 || stop2) { // Condition to change state (the transition)
           state = wait; // Change state to wait when the temperature reaches a certain level or stop2 is true
         }
       }
-      break;
-
-    case wait:
-      EntryTime = millis();
-      while ((millis() - EntryTime) < TimeOut) {
+      break; // Break out of case and move on in the StateMachine() function
+//----------
+    case wait: // The step instructions 
+    
+      EntryTime = millis(); // Write down time when we first entered case block
+      
+      if ((millis() - EntryTime) < TimeOut) { // Condition to hinder block to get stuck
         current_time = millis(); // Save time when first entering the wait state
-        if ((millis() - current_time) >= 30000 || stop2) {
+        if ((millis() - current_time) >= 30000 || stop2) { // Condition to change state (the transition)
           state = drain1; // Change state to drain1 after 30 seconds or when stop2 is true
         }
       }
-      break;
-
-    case drain1:
-      EntryTime = millis();
-      while ((millis() - EntryTime) < TimeOut) {
-        heater = false; // Stop heater
-        valveC = true; // Open outlet valve C for draining the mixture
-        if (s2 || stop2) {
-          state = drain2; // Change state to drain2 when tank level is below medium level indicator or stop2 is true
+      break; // Break out of case and move on in the StateMachine() function
+//----------
+    case drain1: // The step instructions 
+    
+      EntryTime = millis(); // Write down time when we first entered case block
+      
+        if ((millis() - EntryTime) < TimeOut) { // Condition to hinder block to get stuck
+          if (state != PreviousState){ // Instructions below are only to be done the first time state has been set
+            heater = false; // Stop heater
+            valveC = true; // Open outlet valve C for draining the mixture
+          }
+          if (s2 || stop2) { // Condition to change state (the transition)
+            state = drain2; // Change state to drain2 when tank level is below medium level indicator or stop2 is true
+          }
+        }      
+      break; // Break out of case and move on in the StateMachine() function
+//----------
+    case drain2: // The step instructions 
+    
+      EntryTime = millis(); // Write down time when we first entered case block
+      
+      if ((millis() - EntryTime) < TimeOut) { // Condition to hinder block to get stuck
+        if (state != PreviousState){ // Instructions below are only to be done the first time state has been set
+          stirrer = false; // Stop stirrer
         }
-      }
-      break;
-
-    case drain2:
-      EntryTime = millis();
-      while ((millis() - EntryTime) < TimeOut) {
-        stirrer = false; // Stop stirrer
-        if ((s1 || stop2) && (counter == 10 || stop1)) {
+        if ((s1 || stop2) && (counter == 10 || stop1)) { // Condition to change state (the transition)
           state = ready; // Stop loop and return to ready state given conditions above are met
         } else if (s1 && counter < 10 && !stop1 && !stop2) {
           state = fill_A; // Restart loop/program, moving back to fill_A state given conditions above are met
           }
       }
-      break;
-  } 
+      break; // Break out of case and move on in the StateMachine() function
+//----------
+  }
+  
+  PreviousState = state; // Update previousState with the current state before executing the switch statement
+  
+  if (state == ready){
+    TimeInSequence = 0; // Reset sequence time tracker
+  } else if ((state != ready) and (state != pause)){
+    TimeInSequence = millis()- TimeInSequence; // Update time spent in sequence (Time since sketch was uploaded - Time since start button was pressed)
+    } 
 }
+
+  // Keep track of / Update - our time variables, see declaration for more info.
+    TimeInSequenceJSON = TimeInSequence/1000; // s
+    TimeRunningJSON = millis()/1000; // s
+
 //----------------------------------------------------------
 
 void WriteOutUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
@@ -335,14 +355,14 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
     delay(10); // Just to keep it from going bananas
     }
 
-    delay(100); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
+    delay(500); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
     
     while (Serial.available() > 0) {
       c = (char)Serial.read(); // Read one character from the serial buffer
       jsonstring += c;
   }
 
-    delay(100); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
+    delay(500); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
 
     
   if (jsonstring.length() > 0) {
@@ -398,13 +418,13 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
       delay(10); // Just to keep it from going bananas
     }
 
-    delay(100); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
+    delay(500); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
     
     while (Serial.available() > 0) {
       c = (char)Serial.read(); // Read one character from the serial buffer
       jsonstring += c;
   }
-    delay(100); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
+    delay(500); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
 
     // Check if any data was received
     if (jsonstring.length() > 0) {
@@ -424,18 +444,14 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
 // What we actually have added here is visualized in figure 9 in thesis document v1.0.
 
 void loop(){
-  //delay(0);
+  //delay(25000);
 
   // Call our functions
 
     WriteInUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by SensorDataRead() // READ INPUT
     
-    StateMachine(); // Control Logic // Calling main function for executing process logic sequence
-    
-  // Keep track of / Update - our time variables, see declaration for more info.
-    TimeInSequenceJSON = TimeInSequence/1000; // s
-    TimeRunningJSON = millis()/1000; // s
-      
+      StateMachine(); // Control Logic // Calling main function for executing process logic sequence
+          
     WriteOutUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by StateMachine() // UPDATE OUTPUT
     
     SensorLogicDataWrite(); // Step 2 // Calling function that sends data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
@@ -444,7 +460,7 @@ void loop(){
 
     RequestLogicForceFreezeRead(true); // Allow step 4 (LogicForceFreezeRead();) to begin by sending request of data to the HMI Layer (aka Node-RED) // set "gate" function node to true for allowed passage
     
-    LogicForceFreezeRead(); // Step 4 // Calling function that sends data from HMI Layer to Control Layer.
+      LogicForceFreezeRead(); // Step 4 // Calling function that sends data from HMI Layer to Control Layer.
 
     RequestLogicForceFreezeRead(false); // Stop step 4 from sending data without request from the HMI Layer to the Control Layer (aka Arduino) // set "gate" function node to false for blockage
     
@@ -454,7 +470,7 @@ void loop(){
     
     RequestSensorDataRead(true); // Allow step 8 (SensorDataRead();) to begin by sending request of data to the Process Layer (aka Node-RED for v1.0) // set "gate" function node to true for allowed passage
     
-    SensorDataRead(); // Step 8 // Return sensor value which are updated by the simulated process hosted in a function node in node-RED (as of v1.0). 
+      SensorDataRead(); // Step 8 // Return sensor value which are updated by the simulated process hosted in a function node in node-RED (as of v1.0). 
     
     RequestSensorDataRead(false); // Stop step 8 from sending data without request from the Process Layer to the Control Layer (aka Arduino) // set "gate" function node to false for blockage
 }
