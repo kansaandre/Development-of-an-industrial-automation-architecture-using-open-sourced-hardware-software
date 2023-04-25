@@ -79,9 +79,9 @@
     //StateMachine()
       unsigned long current_time; // ms // Used to track time for a condition in one state in our StateMachine function
       unsigned long TimeInSequence; // ms // Track time since we were last in state: Ready (meaning time since sequence begun)
-      states PreviousState = pause; //(millis() - EntryTime) < TimeOut) Exit conditions to compensate for blocking code in our StateMachine()
-        const uint16_t TimeOut = 1000; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
-        uint32_t EntryTime; // ms // Start tracking time as soon as we enter a state so we know how long we been there.
+      const uint16_t TimeOut = 1000; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
+      uint8_t z = 0;
+      states PreviousState = 0;
         
     //LogicForceFreezeRead()
       char c; // When we read character by character from large JSON data that is sent to this layer, the Control Layer.
@@ -160,7 +160,6 @@ void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
 
 void StateMachine(){ // Main function for executing process logic sequence // Control Process Logic Loop (see Figure 8. in thesis document v1.0)
 
-  PreviousState = state; // Update previousState with the current state before executing the switch statement
 
   switch (state) { 
 //----------   
@@ -169,21 +168,24 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
       if (start) { // Condition to change state (the transition) 
         TimeInSequence = millis(); // Set equal to time we "started" our sequence
         state = fill_A; // Change state to fill_A when start button is pressed
+        z = 0;
       }
       
       break; // Break out of case and move on in the StateMachine() function
 //----------
     case fill_A: // The step instructions  
 
-      if (state != PreviousState){ // Instructions below are only to be done the first time state has been set     
+      if (z == 0){ // Instructions below are only to be done the first time state has been set     
           counter++; // Increase counter for each sequence loop        
           valveA = true; // Open inlet valve A for chemical A
-        }
+          z+=z;
+      }
       if (!s2 || stop2) { // Condition to change state (the transition) 
         state = fill_B; // Change state to fill_B when medium level indicator in the tank is reached or stop2 is true
       }
        
       break; // Break out of case and move on in the StateMachine() function
+      
 //----------
     case fill_B: // The step instructions 
    
@@ -254,6 +256,10 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
   // Keep track of / Update - our time variables, see declaration for more info.
     TimeInSequenceJSON = TimeInSequence/1000; // s
     TimeRunningJSON = millis()/1000; // s
+
+
+  PreviousState = state; // Update previousState with the current state before executing the switch statement
+
 }
 
 //----------------------------------------------------------
@@ -424,7 +430,7 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
 // What we actually have added here is visualized in figure 9 in thesis document v1.0.
 
 void loop(){
-  delay(25000);
+  delay(2000);
 
   // Call our functions
 
