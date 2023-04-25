@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 25.04.2023 03:35
+// LAST UPDATE (roughly): 26.04.2023 01:50  
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -80,8 +80,7 @@
       unsigned long current_time; // ms // Used to track time for a condition in one state in our StateMachine function
       unsigned long TimeInSequence; // ms // Track time since we were last in state: Ready (meaning time since sequence begun)
       const uint16_t TimeOut = 1000; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
-      uint8_t z = 0;
-      states PreviousState = 0;
+      boolean PreviouslyVisited = false; // Have we previously visited a case state in the StateMachine() switch function and completed instructions meant to only be done once?
         
     //LogicForceFreezeRead()
       char c; // When we read character by character from large JSON data that is sent to this layer, the Control Layer.
@@ -160,7 +159,6 @@ void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
 
 void StateMachine(){ // Main function for executing process logic sequence // Control Process Logic Loop (see Figure 8. in thesis document v1.0)
 
-
   switch (state) { 
 //----------   
     case ready: // The step instructions 
@@ -168,75 +166,80 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
       if (start) { // Condition to change state (the transition) 
         TimeInSequence = millis(); // Set equal to time we "started" our sequence
         state = fill_A; // Change state to fill_A when start button is pressed
-        z = 0;
       }
-      
+      PreviouslyVisited = false; //reset the PreviouslyVisited variable when exiting a case
       break; // Break out of case and move on in the StateMachine() function
+      
 //----------
     case fill_A: // The step instructions  
 
-      if (z == 0){ // Instructions below are only to be done the first time state has been set     
+      if (PreviouslyVisited == false){ // Instructions below are only to be done the first time state has been set     
           counter++; // Increase counter for each sequence loop        
-          valveA = true; // Open inlet valve A for chemical A
-          z+=z;
+          PreviouslyVisited = true; // Set true so instruction above do not happen every main loop() we do.
       }
+      
+      valveA = true; // Open inlet valve A for chemical A // This instruction should be done every time we loop the main loop() function
+                     // as we might need to set variable to "correct" value if override in HMI has been set and then removed.
+      
       if (!s2 || stop2) { // Condition to change state (the transition) 
         state = fill_B; // Change state to fill_B when medium level indicator in the tank is reached or stop2 is true
       }
-       
+      PreviouslyVisited = false; //reset the PreviouslyVisited variable when exiting a case 
       break; // Break out of case and move on in the StateMachine() function
       
 //----------
     case fill_B: // The step instructions 
-   
-      if (state != PreviousState){ // Instructions below are only to be done the first time state has been set
-        valveA = false; // Close valve A
-        valveB = true; // Open inlet valve B for chemical B
-        stirrer = true; // Start stirrer for mixing chemicals A and B
-        heater = true; // Start heater for warming up the mixture
-      } 
+         
+      valveA = false; // Close valve A
+      valveB = true; // Open inlet valve B for chemical B
+      stirrer = true; // Start stirrer for mixing chemicals A and B
+      heater = true; // Start heater for warming up the mixture
+
       if (!s3 || stop2) { // Condition to change state (the transition) 
         state = heating; // Change state to heating when high level indicator in the tank is reached or stop2 is true
       }
-      
+      PreviouslyVisited = false; //reset the PreviouslyVisited variable when exiting a case 
       break; // Break out of case and move on in the StateMachine() function
+      
 //----------
     case heating: // The step instructions
      
       if (temp >= 85 || stop2) { // Condition to change state (the transition)
         state = wait; // Change state to wait when the temperature reaches a certain level or stop2 is true
       }
-      
+      PreviouslyVisited = false; //reset the PreviouslyVisited variable when exiting a case
       break; // Break out of case and move on in the StateMachine() function
+      
 //----------
     case wait: // The step instructions 
 
-        if (state != PreviousState){ // Instructions below are only to be done the first time state has been set
+        if (PreviouslyVisited == false){ // Instructions below are only to be done the first time state has been set
           current_time = millis(); // Save time when first entering the wait state
+          PreviouslyVisited = true; // Set true so instruction above do not happen every main loop() we do.
         }
         if ((millis() - current_time) >= 30000 || stop2) { // Condition to change state (the transition)
           state = drain1; // Change state to drain1 after 30 seconds or when stop2 is true
         }
-      
+      PreviouslyVisited = false; //reset the PreviouslyVisited variable when exiting a case
       break; // Break out of case and move on in the StateMachine() function
+      
 //----------
     case drain1: // The step instructions 
 
-      if (state != PreviousState){ // Instructions below are only to be done the first time state has been set
-        heater = false; // Stop heater
-        valveC = true; // Open outlet valve C for draining the mixture
-      }
+      heater = false; // Stop heater
+      valveC = true; // Open outlet valve C for draining the mixture
+
       if (s2 || stop2) { // Condition to change state (the transition)
         state = drain2; // Change state to drain2 when tank level is below medium level indicator or stop2 is true
       }
-              
+      PreviouslyVisited = false; //reset the PreviouslyVisited variable when exiting a case        
       break; // Break out of case and move on in the StateMachine() function
+      
 //----------
     case drain2: // The step instructions 
     
-      if (state != PreviousState){ // Instructions below are only to be done the first time state has been set
-        stirrer = false; // Stop stirrer
-      }
+      stirrer = false; // Stop stirrer
+     
       if ((s1 || stop2) && (counter == 10 || stop1)) { // Condition to change state (the transition)
         state = ready; // Stop loop and return to ready state given conditions above are met
       } else if (s1 && counter < 10 && !stop1 && !stop2) {
@@ -256,10 +259,6 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
   // Keep track of / Update - our time variables, see declaration for more info.
     TimeInSequenceJSON = TimeInSequence/1000; // s
     TimeRunningJSON = millis()/1000; // s
-
-
-  PreviousState = state; // Update previousState with the current state before executing the switch statement
-
 }
 
 //----------------------------------------------------------
