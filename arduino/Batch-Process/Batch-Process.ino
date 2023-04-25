@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 25.04.2023 01:22
+// LAST UPDATE (roughly): 25.04.2023 02:01
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -81,7 +81,7 @@
       unsigned long TimeInSequence; // ms // Track time since we were last in state: Ready (meaning time since sequence begun)
       int8_t PreviousState = -1;
       //(millis() - EntryTime) < TimeOut) Exit conditions to compensate for blocking code in our StateMachine()
-        const uint16_t TimeOut = 500; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
+        const uint16_t TimeOut = 1000; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
         uint32_t EntryTime; // ms // Start tracking time as soon as we enter a state so we know how long we been there.
         
     //LogicForceFreezeRead()
@@ -370,8 +370,8 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
   if (jsonstring.length() > 0) {
     deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object. Note deserializeJson clear JsonMemory before writing jsonstring to it.   
 
-    Serial.println(jsonstring);  
-    Serial.flush(); 
+    //Serial.println(jsonstring);  debug
+    //Serial.flush(); debug
   } else {
       Serial.println("No data recieved from HMI Layer"); // Just for easy debugging in HMI Layer (node-red)
       }
