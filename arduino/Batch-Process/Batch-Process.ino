@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 25.04.2023 02:01
+// LAST UPDATE (roughly): 25.04.2023 02:53
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -79,8 +79,7 @@
     //StateMachine()
       unsigned long current_time; // ms // Used to track time for a condition in one state in our StateMachine function
       unsigned long TimeInSequence; // ms // Track time since we were last in state: Ready (meaning time since sequence begun)
-      int8_t PreviousState = -1;
-      //(millis() - EntryTime) < TimeOut) Exit conditions to compensate for blocking code in our StateMachine()
+      states PreviousState = pause; //(millis() - EntryTime) < TimeOut) Exit conditions to compensate for blocking code in our StateMachine()
         const uint16_t TimeOut = 1000; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
         uint32_t EntryTime; // ms // Start tracking time as soon as we enter a state so we know how long we been there.
         
@@ -160,7 +159,9 @@ void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
 //-------------------------------------------------------------------------------------------------------------------//
 
 void StateMachine(){ // Main function for executing process logic sequence // Control Process Logic Loop (see Figure 8. in thesis document v1.0)
-      
+
+  PreviousState = state; // Update previousState with the current state before executing the switch statement
+
   switch (state) { 
 //----------   
     case ready: // The step instructions 
@@ -223,7 +224,9 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
       EntryTime = millis(); // Write down time when we first entered case block
       
       if ((millis() - EntryTime) < TimeOut) { // Condition to hinder block to get stuck
-        current_time = millis(); // Save time when first entering the wait state
+        if (state != PreviousState){ // Instructions below are only to be done the first time state has been set
+          current_time = millis(); // Save time when first entering the wait state
+        }
         if ((millis() - current_time) >= 30000 || stop2) { // Condition to change state (the transition)
           state = drain1; // Change state to drain1 after 30 seconds or when stop2 is true
         }
@@ -262,9 +265,7 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
       break; // Break out of case and move on in the StateMachine() function
 //----------
   }
-  
-  PreviousState = state; // Update previousState with the current state before executing the switch statement
-  
+    
   if (state == ready){
     TimeInSequence = 0; // Reset sequence time tracker
   } else if ((state != ready) and (state != pause)){
@@ -446,7 +447,7 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
 // What we actually have added here is visualized in figure 9 in thesis document v1.0.
 
 void loop(){
-  //delay(25000);
+  delay(25000);
 
   // Call our functions
 
@@ -484,6 +485,6 @@ void loop(){
 void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset
     
 //Serial communication setup
-  Serial.begin(57600); // //9600 baud per seconds (bits per seconds)
+  Serial.begin(9600); // //9600 baud per seconds (bits per seconds)
   delay(20000); // Wait until serial commuication is up and running before "starting" program.
 }
