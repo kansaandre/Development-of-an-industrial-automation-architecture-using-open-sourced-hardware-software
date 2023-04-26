@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 26.04.2023 23:24
+// LAST UPDATE (roughly): 26.04.2023 00:04
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -456,7 +456,7 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
 
 void loop(){
   // Call our functions
-delay(50);
+delay(25000);
     WriteInUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by SensorDataRead() // READ INPUT
 delay(50);    
       StateMachine(); // Control Logic // Calling main function for executing process logic sequence
