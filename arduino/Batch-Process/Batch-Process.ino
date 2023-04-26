@@ -1,5 +1,6 @@
-// LAST UPDATE (roughly): 26.04.2023 00:04
+// LAST UPDATE (roughly): 26.04.2023 01:05
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
+// NOTE! Code should not exceed 60 % Dynamic Memory usage! Causes early cut-off of strings with are written to the other layers in SensorLogicDataWrite() and ActuatorWrite().
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
 // this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -43,13 +44,13 @@
       boolean s1 = true; // Low level indicator in tank (Normally Closed (NC)) 
       boolean s2 = true; // Medium level indicator in tank (Normally Closed (NC))
       boolean s3 = true; // High level indicator in tank (Normally Closed (NC))
-      float temp = 20; //[C] Temperature sensor located inside tank 
+      uint8_t temp = 20; //[C] Temperature sensor located inside tank 
     
     // Program Variables (program variables)
       uint8_t counter = 0; // Counter used to count how many times sequence has looped
       String flow = ""; // Variable used to identify string when sent on serial line in JSON format
       boolean overridemode = false; // Set in the UI when operators/engineers override values manually
-      uint16_t TimeInSequenceJSON; // s // TimeInSequence varible divided by 1000 = seconds since sequence was started
+      uint8_t TimeInSequenceJSON; // s // TimeInSequence varible divided by 1000 = seconds since sequence was started
       uint16_t TimeRunningJSON; // s // TimeRunning variable divided by 1000 = seconds since program was uplodaded to microcontroller
     
     // JSON declaration variables
@@ -77,15 +78,16 @@
       boolean i = false; // Used to call InitJsonMemory() only first the time WriteInUpdatedVariables() is called
     
     //StateMachine()
-      unsigned long current_time; // ms // Used to track time for a condition in one state in our StateMachine function
-      unsigned long TimeInSequence; // ms // Track time since we were last in state: Ready (meaning time since sequence begun)
-      unsigned long SetTimeInSequence; // ms // Time set since transition from ready to fill_A happens
-      const uint16_t TimeOut = 1000; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
+      uint32_t current_time; // ms // Used to track time for a condition in one state in our StateMachine function
+      uint16_t TimeInSequence; // ms // Track time since we were last in state: Ready (meaning time since sequence begun)
+      uint16_t SetTimeInSequence; // ms // Time set since transition from ready to fill_A happens
+
+      const uint8_t TimeOut = 255; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
       boolean PreviouslyVisited = false; // Have we previously visited a case state in the StateMachine() switch function and completed instructions meant to only be done once?
 
     //(millis()-SerialWait < SerialTimeOut) Exit condition when serial listening for reading JSON data from outside layer commuication 
-    unsigned long SerialWait; // ms // Set when we begin listening on serial port
-    uint16_t SerialTimeOut = 5000; // ms // If no data arrive within said timeout, we jump out of while loop.
+      uint32_t SerialWait; // ms // Set when we begin listening on serial port
+      uint8_t SerialTimeOut = 255; // ms // If no data arrive within said timeout, we jump out of while loop.
 
     //LogicForceFreezeRead() 
       char c; // When we read character by character from large JSON data that is sent to this layer, the Control Layer.
@@ -94,12 +96,11 @@
 
     //SensorDataRead
       String jsonstringLastValid_SDR = ""; // SDR = SensorDataRead. Store last valid jsonstring that was read from SerialLine. Used in case we get error when deserializing new incoming jsonstring. 
-
     
   //Setup of JSON // JSON is used as our communication data interchange between layers 
   
-    StaticJsonDocument<300> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document
-    StaticJsonDocument<100> JsonSerialReady; // This will destroy and recreate the document
+    StaticJsonDocument<200> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document
+    StaticJsonDocument<70> JsonSerialReady; // This will destroy and recreate the document
     
     void InitJsonMemory() { //Error "'JsonMemory' does not name a type" usually occurs when you try to use a variable outside of a function scope therefore it has its own function... run at void setup()...
     //Iniziation of variables to be written to JsonMemory
