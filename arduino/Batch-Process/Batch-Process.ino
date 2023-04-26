@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 26.04.2023 04:06
+// LAST UPDATE (roughly): 26.04.2023 23:24
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -82,16 +82,20 @@
       unsigned long SetTimeInSequence; // ms // Time set since transition from ready to fill_A happens
       const uint16_t TimeOut = 1000; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
       boolean PreviouslyVisited = false; // Have we previously visited a case state in the StateMachine() switch function and completed instructions meant to only be done once?
-        
-    //LogicForceFreezeRead()
+
+    //(millis()-SerialWait < SerialTimeOut) Exit condition when serial listening for reading JSON data from outside layer commuication 
+    unsigned long SerialWait; // ms // Set when we begin listening on serial port
+    uint16_t SerialTimeOut = 5000; // ms // If no data arrive within said timeout, we jump out of while loop.
+
+    //LogicForceFreezeRead() 
       char c; // When we read character by character from large JSON data that is sent to this layer, the Control Layer.
             // Must be done this way due to small receiver serial buffer layer (64 bytes for Arduno UNO microcontroller)
-      char delimiter = '\n';
+      String jsonstringLastValid_LFFR = ""; // LFFR = LogicForceFreezeRead. Store last valid jsonstring that was read from SerialLine. Used in case we get error when deserializing new incoming jsonstring. 
 
-      //(millis()-SerialWait < SerialTimeOut) Exit condition when serial listening for reading JSON data from outside layer commuication 
-        unsigned long SerialWait; // ms // Set when we begin listening on serial port
-        uint16_t SerialTimeOut = 5000; // ms // If no data arrive within said timeout, we jump out of while loop.
+    //SensorDataRead
+      String jsonstringLastValid_SDR = ""; // SDR = SensorDataRead. Store last valid jsonstring that was read from SerialLine. Used in case we get error when deserializing new incoming jsonstring. 
 
+    
   //Setup of JSON // JSON is used as our communication data interchange between layers 
   
     StaticJsonDocument<300> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document
@@ -353,16 +357,25 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
   }
 
     //delay(500); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
-
     
   if (jsonstring.length() > 0) {
-    deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object. Note deserializeJson clear JsonMemory before writing jsonstring to it.   
 
-    //Serial.println(jsonstring);  debug
-    //Serial.flush(); debug
-  } else {
-      Serial.println("No data recieved from HMI Layer"); // Just for easy debugging in HMI Layer (node-red)
+    DeserializationError error = deserializeJson(JsonMemory, jsonstring); 
+    
+    if (error == DeserializationError::Ok){ // Used to check for errors when deserializing the jsonstring which just has been read from serial line
+      jsonstringLastValid_LFFR = jsonstring; // Store the jsonstring we read out, it contain good data.
+    } else {
+      
+      String TempStr = ("DeserializationError in LogicForceFreezeRead: "); // Local variable, declared directly...
+      TempStr.concat(error.c_str()); // Appending error message to TempStr
+      Serial.println(TempStr);  
+      
+      deserializeJson(JsonMemory, jsonstringLastValid_LFFR); // This function clear JsonMemory and fill it with last valid data we received from the HMI Layer.
+      delay(10); // Waiting 10 ms before continuing program, maybe serial commuication resolve...
       }
+  } else {
+      Serial.println("No data recieved from HMI Layer in LogicForceFreezeRead"); // Just for easy debugging in HMI Layer (node-red)
+    }
 }
    
 //----------------------------------------------------------
@@ -375,7 +388,6 @@ void ActuatorWrite() {
       serializeJson(JsonMemory, jsonstring); // JsonMemory set in LogicForceFreezeRead()
       Serial.println(jsonstring);
       Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
-
 }
 
 //----------------------------------------------------------
@@ -418,13 +430,22 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
 
     // Check if any data was received
     if (jsonstring.length() > 0) {
-      deserializeJson(JsonMemory, jsonstring); // Store serial data string in JSON memory, effectively making it into a JSON object. Note deserializeJson clear JsonMemory before writing jsonstring to it.  
-      
-      jsonstring = "";
-     
+
+    DeserializationError error = deserializeJson(JsonMemory, jsonstring); 
+    
+    if (error == DeserializationError::Ok){ // Used to check for errors when deserializing the jsonstring which just has been read from serial line
+      jsonstringLastValid_SDR = jsonstring; // Store the jsonstring we read out, it contain good data.
     } else {
-      Serial.println("No data recieved from Process Layer"); // Just for easy debugging in HMI Layer (node-red)
+      String TempStr = ("DeserializationError in SensorDataRead: "); // Local variable, declared directly... 
+      TempStr.concat(error.c_str()); // Appending error message to TempStr
+      Serial.println(TempStr);
+      
+      deserializeJson(JsonMemory, jsonstringLastValid_SDR); // This function clear JsonMemory and fill it with last valid data we received from the Process Layer.
+      delay(10); // Waiting 10 ms before continuing program, maybe serial commuication resolve...
       }
+  } else {
+      Serial.println("No data recieved from HMI Layer in SensorDataRead"); // Just for easy debugging in HMI Layer (node-red)
+    }
 }
 
 //-------------------------------------------------------------------------------------------------------------------//
