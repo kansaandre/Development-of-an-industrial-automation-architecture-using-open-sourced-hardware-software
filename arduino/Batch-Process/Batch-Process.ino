@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 26.04.2023 02:37  
+// LAST UPDATE (roughly): 26.04.2023 04:06
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -131,7 +131,7 @@ void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
 
   // Initialize JSON 
     if (i == false){
-      JsonMemory.clear(); // Clear data stored in JsonMemory 
+      //JsonMemory.clear(); // Clear data stored in JsonMemory 
       InitJsonMemory(); // Function that initializes the JsonMemory object with the desired values only first time WriteInUpdatedVariables() is called
       i = true;
     }
@@ -204,6 +204,8 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
       
 //----------
     case heating: // The step instructions
+
+      valveB = false; //Stop filling 
      
       if (temp >= 85 || stop2) { // Condition to change state (the transition)
         state = wait; // Change state to wait when the temperature reaches a certain level or stop2 is true
@@ -340,17 +342,17 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
     
     while ((Serial.available() == 0) and (millis() - SerialWait < SerialTimeOut)) {
     // Do nothing; just wait for data
-    delay(10); // Just to keep it from going bananas
+    delay(1); // Just to keep it from going bananas
     }
 
-    delay(200); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
+    delay(175); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
     
     while (Serial.available() > 0) {
       c = (char)Serial.read(); // Read one character from the serial buffer
       jsonstring += c;
   }
 
-    delay(200); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
+    //delay(500); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
 
     
   if (jsonstring.length() > 0) {
@@ -403,16 +405,16 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
     
     while ((Serial.available() == 0) and (millis() - SerialWait < SerialTimeOut)) {
     // Do nothing; just wait for data
-      delay(10); // Just to keep it from going bananas
+      delay(1); // Just to keep it from going bananas
     }
 
-    delay(200); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
+    delay(175); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
     
     while (Serial.available() > 0) {
       c = (char)Serial.read(); // Read one character from the serial buffer
       jsonstring += c;
   }
-    delay(200); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
+    //delay(250); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
 
     // Check if any data was received
     if (jsonstring.length() > 0) {
@@ -433,31 +435,31 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
 
 void loop(){
   // Call our functions
-
+delay(50);
     WriteInUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by SensorDataRead() // READ INPUT
-    
+delay(50);    
       StateMachine(); // Control Logic // Calling main function for executing process logic sequence
-          
+delay(50);          
     WriteOutUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by StateMachine() // UPDATE OUTPUT
-    
+delay(50);   
     SensorLogicDataWrite(); // Step 2 // Calling function that sends data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
-
+delay(50);
     //Step 3 - HMI Layer which includes the user interface with override functionality - Hosted in Node-RED. //The UI modifies the data sent to Node-RED in SensorLogicDataWrite() and returns the modified data in LogicForceFreezeRead()   
-
+delay(50);
     RequestLogicForceFreezeRead(true); // Allow step 4 (LogicForceFreezeRead();) to begin by sending request of data to the HMI Layer (aka Node-RED) // set "gate" function node to true for allowed passage
-    
+delay(50);    
       LogicForceFreezeRead(); // Step 4 // Calling function that sends data from HMI Layer to Control Layer.
-
+delay(50);
     RequestLogicForceFreezeRead(false); // Stop step 4 from sending data without request from the HMI Layer to the Control Layer (aka Arduino) // set "gate" function node to false for blockage
-    
+delay(50);    
     ActuatorWrite(); // Step 5 + Step 6 where we read in the Json string "LogicForceFreezeRead" from HMI Layer, change flow property (ID of json data) and send it out of the Control Layer again.
-
+delay(50);
     //Step 7 - Process Layer -> Simulation of the process which as of v1.0 is hosted in node-RED in a function node. Send in ActuatorWrite() json data and process react to it as a real-process and return sensor data in json format in the SensorDataRead() function.   
-    
+delay(50);    
     RequestSensorDataRead(true); // Allow step 8 (SensorDataRead();) to begin by sending request of data to the Process Layer (aka Node-RED for v1.0) // set "gate" function node to true for allowed passage
-    
+delay(50);    
       SensorDataRead(); // Step 8 // Return sensor value which are updated by the simulated process hosted in a function node in node-RED (as of v1.0). 
-    
+delay(50);    
     RequestSensorDataRead(false); // Stop step 8 from sending data without request from the Process Layer to the Control Layer (aka Arduino) // set "gate" function node to false for blockage
 }
 
@@ -468,6 +470,6 @@ void loop(){
 void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset
     
 //Serial communication setup
-  Serial.begin(115200); // //9600 baud per seconds (bits per seconds)
-  delay(20000); // Wait until serial commuication is up and running before "starting" program.
+  Serial.begin(38400); // //9600 baud per seconds (bits per seconds)
+  delay(5000); // Wait until serial commuication is up and running before "starting" program.
 }
