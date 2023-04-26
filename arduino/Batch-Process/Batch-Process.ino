@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 26.04.2023 01:50  
+// LAST UPDATE (roughly): 26.04.2023 02:37  
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -79,6 +79,7 @@
     //StateMachine()
       unsigned long current_time; // ms // Used to track time for a condition in one state in our StateMachine function
       unsigned long TimeInSequence; // ms // Track time since we were last in state: Ready (meaning time since sequence begun)
+      unsigned long SetTimeInSequence; // ms // Time set since transition from ready to fill_A happens
       const uint16_t TimeOut = 1000; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
       boolean PreviouslyVisited = false; // Have we previously visited a case state in the StateMachine() switch function and completed instructions meant to only be done once?
         
@@ -163,11 +164,11 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
 //----------   
     case ready: // The step instructions 
     
-      if (start) { // Condition to change state (the transition) 
-        TimeInSequence = millis(); // Set equal to time we "started" our sequence
+      if ((start == true) && (stop2 == false)) { // Condition to change state (the transition) 
+        SetTimeInSequence = millis(); // Set equal to time we "started" our sequence
         state = fill_A; // Change state to fill_A when start button is pressed
+        PreviouslyVisited = false; //reset the PreviouslyVisited variable when transition is met
       }
-      PreviouslyVisited = false; //reset the PreviouslyVisited variable when exiting a case
       break; // Break out of case and move on in the StateMachine() function
       
 //----------
@@ -181,10 +182,10 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
       valveA = true; // Open inlet valve A for chemical A // This instruction should be done every time we loop the main loop() function
                      // as we might need to set variable to "correct" value if override in HMI has been set and then removed.
       
-      if (!s2 || stop2) { // Condition to change state (the transition) 
+      if ((s2 == false) || (stop2 == true)) { // Condition to change state (the transition) 
         state = fill_B; // Change state to fill_B when medium level indicator in the tank is reached or stop2 is true
+        PreviouslyVisited = false; //reset the PreviouslyVisited variable when transition is met
       }
-      PreviouslyVisited = false; //reset the PreviouslyVisited variable when exiting a case 
       break; // Break out of case and move on in the StateMachine() function
       
 //----------
@@ -197,8 +198,8 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
 
       if (!s3 || stop2) { // Condition to change state (the transition) 
         state = heating; // Change state to heating when high level indicator in the tank is reached or stop2 is true
+        PreviouslyVisited = false; //reset the PreviouslyVisited variable when transition is met
       }
-      PreviouslyVisited = false; //reset the PreviouslyVisited variable when exiting a case 
       break; // Break out of case and move on in the StateMachine() function
       
 //----------
@@ -206,21 +207,21 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
      
       if (temp >= 85 || stop2) { // Condition to change state (the transition)
         state = wait; // Change state to wait when the temperature reaches a certain level or stop2 is true
+        PreviouslyVisited = false; //reset the PreviouslyVisited variable when transition is met
       }
-      PreviouslyVisited = false; //reset the PreviouslyVisited variable when exiting a case
       break; // Break out of case and move on in the StateMachine() function
       
 //----------
     case wait: // The step instructions 
 
-        if (PreviouslyVisited == false){ // Instructions below are only to be done the first time state has been set
-          current_time = millis(); // Save time when first entering the wait state
-          PreviouslyVisited = true; // Set true so instruction above do not happen every main loop() we do.
-        }
-        if ((millis() - current_time) >= 30000 || stop2) { // Condition to change state (the transition)
-          state = drain1; // Change state to drain1 after 30 seconds or when stop2 is true
-        }
-      PreviouslyVisited = false; //reset the PreviouslyVisited variable when exiting a case
+      if (PreviouslyVisited == false){ // Instructions below are only to be done the first time state has been set
+        current_time = millis(); // Save time when first entering the wait state
+        PreviouslyVisited = true; // Set true so instruction above do not happen every main loop() we do.
+      }
+      if ((millis() - current_time) >= 30000 || stop2) { // Condition to change state (the transition)
+        state = drain1; // Change state to drain1 after 30 seconds or when stop2 is true
+        PreviouslyVisited = false; //reset the PreviouslyVisited variable when transition is met
+      }
       break; // Break out of case and move on in the StateMachine() function
       
 //----------
@@ -242,8 +243,10 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
      
       if ((s1 || stop2) && (counter == 10 || stop1)) { // Condition to change state (the transition)
         state = ready; // Stop loop and return to ready state given conditions above are met
+        PreviouslyVisited = false; //reset the PreviouslyVisited variable when transition is met
       } else if (s1 && counter < 10 && !stop1 && !stop2) {
         state = fill_A; // Restart loop/program, moving back to fill_A state given conditions above are met
+        PreviouslyVisited = false; //reset the PreviouslyVisited variable when transition is met
         }
       
       break; // Break out of case and move on in the StateMachine() function
@@ -253,7 +256,7 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
   if (state == ready){
     TimeInSequence = 0; // Reset sequence time tracker
   } else if ((state != ready) and (state != pause)){
-    TimeInSequence = millis()- TimeInSequence; // Update time spent in sequence (Time since sketch was uploaded - Time since start button was pressed)
+    TimeInSequence = millis()- SetTimeInSequence; // Update time spent in sequence (Time since sketch was uploaded - Time since start button was pressed)
     } 
 
   // Keep track of / Update - our time variables, see declaration for more info.
@@ -340,14 +343,14 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
     delay(10); // Just to keep it from going bananas
     }
 
-    delay(500); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
+    delay(200); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
     
     while (Serial.available() > 0) {
       c = (char)Serial.read(); // Read one character from the serial buffer
       jsonstring += c;
   }
 
-    delay(500); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
+    delay(200); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
 
     
   if (jsonstring.length() > 0) {
@@ -403,13 +406,13 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
       delay(10); // Just to keep it from going bananas
     }
 
-    delay(500); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
+    delay(200); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
     
     while (Serial.available() > 0) {
       c = (char)Serial.read(); // Read one character from the serial buffer
       jsonstring += c;
   }
-    delay(500); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
+    delay(200); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
 
     // Check if any data was received
     if (jsonstring.length() > 0) {
@@ -429,8 +432,6 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
 // What we actually have added here is visualized in figure 9 in thesis document v1.0.
 
 void loop(){
-  delay(2000);
-
   // Call our functions
 
     WriteInUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by SensorDataRead() // READ INPUT
@@ -467,6 +468,6 @@ void loop(){
 void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset
     
 //Serial communication setup
-  Serial.begin(9600); // //9600 baud per seconds (bits per seconds)
+  Serial.begin(115200); // //9600 baud per seconds (bits per seconds)
   delay(20000); // Wait until serial commuication is up and running before "starting" program.
 }
