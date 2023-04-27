@@ -8,25 +8,9 @@
         "env": []
     },
     {
-        "id": "5285e155d2e62dcd",
-        "type": "tab",
-        "label": "Flow 2",
-        "disabled": false,
-        "info": "",
-        "env": []
-    },
-    {
-        "id": "88551ae8ec995ede",
-        "type": "tab",
-        "label": "Flow 3",
-        "disabled": false,
-        "info": "",
-        "env": []
-    },
-    {
         "id": "3c689f194f494e02",
         "type": "serial-port",
-        "serialport": "/dev/ttyUSB0",
+        "serialport": "/dev/ttyUSB1",
         "serialbaud": "38400",
         "databits": "8",
         "parity": "none",
@@ -208,7 +192,7 @@
         "templateScope": "local",
         "className": "",
         "x": 600,
-        "y": 380,
+        "y": 320,
         "wires": [
             [
                 "b2884c3dbe6e1caf"
@@ -237,14 +221,14 @@
         "id": "11e5f4d5f94dc332",
         "type": "function",
         "z": "5876467d554e446b",
-        "name": "LogicForceFreezeRead",
-        "func": "var sensorData = msg.payload.SensorLogicDataWrite;\nvar overrideData = msg.payload.OverrideFromUI;\n\nfor (var key in overrideData) {\n    if (overrideData[key] !== null) {\n        sensorData[key] = overrideData[key];\n    }\n}\n\nmsg.payload = sensorData;\nmsg.payload.flow = \"LogicForceFreezeRead\";\nmsg.topic = \"LogicForceFreezeRead\";\n\nmsg.payload.SerialReady = null; // If SerialReady is present in msg.payload we set it to null so it does not disturbe the next node, join node..\n\nreturn msg;",
+        "name": "LogicForceFreezeRead (LFFR)",
+        "func": "var sensorData = msg.payload.SensorLogicDataWrite;\nvar overrideData = msg.payload.OverrideFromUI;\n\nfor (var key in overrideData) {\n    if (overrideData[key] !== null) {\n        sensorData[key] = overrideData[key];\n    }\n}\n\nmsg.payload = sensorData;\nmsg.payload.flow = \"LFFR\";\nmsg.topic = \"LogicForceFreezeRead\";\n\nmsg.payload.SerialReady = null; // If SerialReady is present in msg.payload we set it to null so it does not disturbe the next node, join node..\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1290,
+        "x": 1270,
         "y": 260,
         "wires": [
             [
@@ -257,7 +241,7 @@
         "id": "d2d53ce039e3d9be",
         "type": "change",
         "z": "5876467d554e446b",
-        "name": "SensorLogicDataWrite",
+        "name": "SensorLogicDataWrite (SLDW)",
         "rules": [
             {
                 "t": "set",
@@ -272,7 +256,7 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 840,
+        "x": 910,
         "y": 200,
         "wires": [
             [
@@ -327,7 +311,7 @@
         "reduceInit": "",
         "reduceInitType": "",
         "reduceFixup": "",
-        "x": 1070,
+        "x": 1050,
         "y": 260,
         "wires": [
             [
@@ -390,7 +374,7 @@
         "z": "5876467d554e446b",
         "name": "",
         "serial": "3c689f194f494e02",
-        "x": 930,
+        "x": 790,
         "y": 380,
         "wires": [
             [
@@ -418,7 +402,7 @@
         "reduceInit": "",
         "reduceInitType": "num",
         "reduceFixup": "",
-        "x": 1530,
+        "x": 1550,
         "y": 260,
         "wires": [
             [
@@ -434,7 +418,7 @@
         "property": "payload",
         "action": "obj",
         "pretty": false,
-        "x": 1090,
+        "x": 950,
         "y": 380,
         "wires": [
             [
@@ -446,14 +430,14 @@
         "id": "62db15981d866861",
         "type": "function",
         "z": "5876467d554e446b",
-        "name": "FilterPass->RequestLogicForceFreezeRead",
-        "func": "if (msg.payload.flow === \"RequestLogicForceFreezeRead\"){\n    msg.topic = \"RequestLogicForceFreezeRead\";\n    msg.payload.flow = null;\n    return msg;\n}\n\nelse{\n    // Do nothing\n}",
+        "name": "FilterPass->RequestLogicForceFreezeRead (RLFFR)",
+        "func": "if (msg.payload.flow === \"RLFFR\"){\n    msg.topic = \"RequestLogicForceFreezeRead\";\n    msg.payload.flow = null;\n    return msg;\n}\n\nelse{\n    // Do nothing\n}",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1350,
+        "x": 1240,
         "y": 380,
         "wires": [
             [
@@ -465,14 +449,14 @@
         "id": "6c8c757215e0bfc4",
         "type": "function",
         "z": "5876467d554e446b",
-        "name": "FilterPass->SensorLogicDataWrite",
-        "func": "if (msg.payload.flow === \"SensorLogicDataWrite\"){\n    return msg;\n}\n\nelse{\n    // Do nothing\n}",
+        "name": "FilterPass->SensorLogicDataWrite (SLDW)",
+        "func": "if (msg.payload.flow === \"SLDW\"){\n    return msg;\n}\n\nelse{\n    // Do nothing\n}",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 560,
+        "x": 570,
         "y": 200,
         "wires": [
             [
@@ -512,7 +496,7 @@
         "type": "function",
         "z": "5876467d554e446b",
         "name": "wait for request",
-        "func": "if (msg.payload.SerialReady === true) {\n    msg.payload.flow = \"LogicForceFreezeRead\";\n    delete msg.payload.SerialReady;\n    return msg;\n}\n\nelse {\n\n}\n",
+        "func": "if (msg.payload.SerialReady === true) {\n    msg.payload.flow = \"LFFR\";\n    delete msg.payload.SerialReady;\n    return msg;\n}\n\nelse {\n\n}\n",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -531,14 +515,14 @@
         "id": "e0ad19045c6b1b70",
         "type": "function",
         "z": "5876467d554e446b",
-        "name": "FilterPass->ActuatorWrite",
-        "func": "if (msg.payload.flow === \"ActuatorWrite\"){\n    return msg;\n}\n\nelse{\n    // Do nothing\n}",
+        "name": "FilterPass->ActuatorWrite (AW)",
+        "func": "if (msg.payload.flow === \"AW\"){\n    return msg;\n}\n\nelse{\n    // Do nothing\n}",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 450,
+        "x": 470,
         "y": 680,
         "wires": [
             [
@@ -552,7 +536,7 @@
         "z": "5876467d554e446b",
         "name": "",
         "serial": "3c689f194f494e02",
-        "x": 410,
+        "x": 370,
         "y": 760,
         "wires": [
             [
@@ -568,7 +552,7 @@
         "property": "payload",
         "action": "obj",
         "pretty": false,
-        "x": 570,
+        "x": 530,
         "y": 760,
         "wires": [
             [
@@ -580,14 +564,14 @@
         "id": "3a75e2506f4daca6",
         "type": "function",
         "z": "5876467d554e446b",
-        "name": "FilterPass->RequestSensorDataRead",
-        "func": "if (msg.payload.flow === \"RequestSensorDataRead\"){\n    msg.topic = \"RequestSensorDataRead\";\n    msg.payload.flow = null;\n    return msg;\n}\n\nelse{\n    // Do nothing\n}",
+        "name": "FilterPass->RequestSensorDataRead (RSDR)",
+        "func": "if (msg.payload.flow === \"RSDR\"){\n    msg.topic = \"RequestSensorDataRead\";\n    msg.payload.flow = null;\n    return msg;\n}\n\nelse{\n    // Do nothing\n}",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 810,
+        "x": 800,
         "y": 760,
         "wires": [
             [
@@ -628,7 +612,7 @@
         "type": "function",
         "z": "5876467d554e446b",
         "name": "wait for request",
-        "func": "if (msg.payload.SerialReady === true) {\n    msg.payload.flow = \"SensorDataRead\";\n    delete msg.payload.SerialReady;\n    return msg;\n}\n\nelse {\n\n}\n",
+        "func": "if (msg.payload.SerialReady === true) {\n    msg.payload.flow = \"SDR\";\n    delete msg.payload.SerialReady;\n    return msg;\n}\n\nelse {\n\n}\n",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -674,9 +658,9 @@
         "id": "bac7df86a972542a",
         "type": "comment",
         "z": "5876467d554e446b",
-        "name": "ActuatorWrite --> Process Simulation --> SensorDataRead",
+        "name": "ActuatorWrite (AW) --> Process Simulation --> SensorDataRead (SDR)",
         "info": "",
-        "x": 1310,
+        "x": 1350,
         "y": 600,
         "wires": []
     },
@@ -696,7 +680,7 @@
         "z": "5876467d554e446b",
         "name": "HMI LAYER",
         "info": "",
-        "x": 1310,
+        "x": 1330,
         "y": 120,
         "wires": []
     },
@@ -704,9 +688,9 @@
         "id": "d8f660a482548049",
         "type": "comment",
         "z": "5876467d554e446b",
-        "name": "SensorLogicDataWrite --> UI Interaction/Overrides --> LogicForceFreezeRead",
+        "name": "SensorLogicDataWrite (SLDW) --> UI Interaction/Overrides --> LogicForceFreezeRead (LFFR)",
         "info": "",
-        "x": 1310,
+        "x": 1360,
         "y": 160,
         "wires": []
     },
@@ -714,10 +698,10 @@
         "id": "688421a93590b00d",
         "type": "comment",
         "z": "5876467d554e446b",
-        "name": "Last updated 26.04.2023 23:33 by Andre N.K. Kansa",
+        "name": "Last updated 27.04.2023 03:00 by Andre N.K. Kansa",
         "info": "",
         "x": 230,
-        "y": 40,
+        "y": 60,
         "wires": []
     },
     {
@@ -725,7 +709,7 @@
         "type": "function",
         "z": "5876467d554e446b",
         "name": "Process Simulation",
-        "func": "// Store the initial payload\nconst initialPayload = msg.payload;\n\n// Define tank and actuator constants\nconst TANK_CAPACITY = 1000;\nconst HEATER_POWER = 7000000;\nconst HEATER_EFFICIENCY = 0.9;\nconst VALVE_A_FLOW_RATE = 35;\nconst VALVE_B_FLOW_RATE = 30;\nconst VALVE_C_FLOW_RATE = 50;\n\n// Define level sensor thresholds (in liters)\nconst S1_THRESHOLD = 300;\nconst S2_THRESHOLD = 600;\nconst S3_THRESHOLD = 900;\n\n// Define water properties\nconst SPECIFIC_HEAT_WATER = 4200; // J/kg°C\nconst DENSITY_WATER = 1000; // kg/m3\n\n// Get the previous process state from context or use initial values\nlet process = context.get('process') || {\n    tankVolume: 0, // L\n    temperature: initialPayload.temp // °C\n};\n\n// Define actuator states\nlet actuators = {\n    heater: initialPayload.heater,\n    stirrer: initialPayload.stirrer,\n    valveA: initialPayload.valveA,\n    valveB: initialPayload.valveB,\n    valveC: initialPayload.valveC\n};\n\n// Update tank volume based on valve states\nif (actuators.valveA === true) {\n    process.tankVolume += VALVE_A_FLOW_RATE; // Increase tank volume with valve A flow rate\n}\nif (actuators.valveB === true) {\n    process.tankVolume += VALVE_B_FLOW_RATE; // Increase tank volume with valve B flow rate\n}\nif (actuators.valveC === true) {\n    process.tankVolume -= VALVE_C_FLOW_RATE; // Decrease tank volume with valve C flow rate\n\n    // Reset tank volume and temperature when emptied\n    if (process.tankVolume <= 0) {\n        process.tankVolume = 0;\n        process.temperature = 20; // Reset temperature to default value (20°C)\n    }\n}\n\n// Clamp tank volume between 0 and 1000 L\nprocess.tankVolume = Math.max(0, Math.min(TANK_CAPACITY, process.tankVolume));\n\n// Update temperature based on heater state\nif (actuators.heater === true) {\n    let powerApplied = HEATER_POWER * HEATER_EFFICIENCY; // Calculate effective power applied\n    let timeInterval = 1; // s\n    let energyApplied = powerApplied * timeInterval; // Calculate energy applied in J\n    let massWater = process.tankVolume * DENSITY_WATER / 1000; // Calculate mass of water in kg\n    let tempChange = energyApplied / (massWater * SPECIFIC_HEAT_WATER); // Calculate temperature change in °C\n    process.temperature += tempChange; // Update temperature\n}\n\n// Update sensor values based on process state\ninitialPayload.s1 = process.tankVolume <= S1_THRESHOLD; // Set sensor 1 value\ninitialPayload.s2 = process.tankVolume <= S2_THRESHOLD; // Set sensor 2 value\ninitialPayload.s3 = process.tankVolume <= S3_THRESHOLD; // Set sensor 3 value\ninitialPayload.temp = process.temperature.toFixed(1); // Update the initial payload with the new temperature\n\n// Update the message payload\nmsg.payload = initialPayload;\n\n// Store the updated process state in the context for the next iteration\ncontext.set('process', process);\n\n// Clear SerialReady in payload and set flow ID\nmsg.payload.SerialReady = null; // Set SerialReady to null so it doesn't disturb the next node, join node.\nmsg.payload.flow = \"SensorDataRead\"; // Set flow ID for identification purposes\n\nreturn msg; // Return the updated message object\n",
+        "func": "// Store the initial payload\nconst initialPayload = msg.payload;\n\n// Define tank and actuator constants\nconst TANK_CAPACITY = 1000;\nconst HEATER_POWER = 7000000;\nconst HEATER_EFFICIENCY = 0.9;\nconst VALVE_A_FLOW_RATE = 35;\nconst VALVE_B_FLOW_RATE = 30;\nconst VALVE_C_FLOW_RATE = 50;\n\n// Define level sensor thresholds (in liters)\nconst S1_THRESHOLD = 300;\nconst S2_THRESHOLD = 600;\nconst S3_THRESHOLD = 900;\n\n// Define water properties\nconst SPECIFIC_HEAT_WATER = 4200; // J/kg°C\nconst DENSITY_WATER = 1000; // kg/m3\n\n// Get the previous process state from context or use initial values\nlet process = context.get('process') || {\n    tankVolume: 0, // L\n    temperature: initialPayload.temp // °C\n};\n\n// Define actuator states\nlet actuators = {\n    heater: initialPayload.heater,\n    stirrer: initialPayload.stirrer,\n    valveA: initialPayload.valveA,\n    valveB: initialPayload.valveB,\n    valveC: initialPayload.valveC\n};\n\n// Update tank volume based on valve states\nif (actuators.valveA === true) {\n    process.tankVolume += VALVE_A_FLOW_RATE; // Increase tank volume with valve A flow rate\n}\nif (actuators.valveB === true) {\n    process.tankVolume += VALVE_B_FLOW_RATE; // Increase tank volume with valve B flow rate\n}\nif (actuators.valveC === true) {\n    process.tankVolume -= VALVE_C_FLOW_RATE; // Decrease tank volume with valve C flow rate\n\n    // Reset tank volume and temperature when emptied\n    if (process.tankVolume <= 0) {\n        process.tankVolume = 0;\n        process.temperature = 20; // Reset temperature to default value (20°C)\n    }\n}\n\n// Clamp tank volume between 0 and 1000 L\nprocess.tankVolume = Math.max(0, Math.min(TANK_CAPACITY, process.tankVolume));\n\n// Update temperature based on heater state\nif (actuators.heater === true) {\n    let powerApplied = HEATER_POWER * HEATER_EFFICIENCY; // Calculate effective power applied\n    let timeInterval = 1; // s\n    let energyApplied = powerApplied * timeInterval; // Calculate energy applied in J\n    let massWater = process.tankVolume * DENSITY_WATER / 1000; // Calculate mass of water in kg\n    let tempChange = energyApplied / (massWater * SPECIFIC_HEAT_WATER); // Calculate temperature change in °C\n    process.temperature += tempChange; // Update temperature\n}\n\n// Update sensor values based on process state\ninitialPayload.s1 = process.tankVolume <= S1_THRESHOLD; // Set sensor 1 value\ninitialPayload.s2 = process.tankVolume <= S2_THRESHOLD; // Set sensor 2 value\ninitialPayload.s3 = process.tankVolume <= S3_THRESHOLD; // Set sensor 3 value\ninitialPayload.temp = process.temperature; // Update the initial payload with the new temperature\n\n// Update the message payload\nmsg.payload = initialPayload;\n\n// Store the updated process state in the context for the next iteration\ncontext.set('process', process);\n\n// Clear SerialReady in payload and set flow ID\nmsg.payload.SerialReady = null; // Set SerialReady to null so it doesn't disturb the next node, join node.\nmsg.payload.flow = \"SDR\"; // Set flow ID for identification purposes\n\nreturn msg; // Return the updated message object\n",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",

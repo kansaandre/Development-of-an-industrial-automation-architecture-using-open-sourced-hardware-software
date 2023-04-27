@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 26.04.2023 02:57
+// LAST UPDATE (roughly): 27.04.2023 21:46
 
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
@@ -38,8 +38,8 @@
   
 #include <ArduinoJson.h> // v6 used in v1.0 // https://arduinojson.org/ // JSON data compatability with Arduino
 
-//Enter "sudo nano /usr/share/arduino/hardware/arduino/avr/cores/arduino/HardwareSerial.h" and change from the default 64 byte buffer size (for UNO anyway) to 280 bytes by changing "#define SERIAL_RX_BUFFER_SIZE 300"
-  //This is neccessary to be able to receive the large JSON data string we are receving from the HMI layer (aka Node-RED)... Also change "#define SERIAL_TX_BUFFER_SIZE 10" instead of default 16 bytes.. 
+//Enter "sudo nano /usr/share/arduino/hardware/arduino/avr/cores/arduino/HardwareSerial.h" and change from the default 64 byte buffer size (for UNO anyway) to 260 bytes by changing "#define SERIAL_RX_BUFFER_SIZE 260"
+  //This is neccessary to be able to receive the large JSON data string we are receving from the HMI layer (aka Node-RED)... Also change "#define SERIAL_TX_BUFFER_SIZE 16" instead of default 64 bytes.. 
 
 //-------------------------------------------------------------------------------------------------------------------//
       
@@ -62,7 +62,7 @@
       boolean s1 = true; // Low level indicator in tank (Normally Closed (NC)) 
       boolean s2 = true; // Medium level indicator in tank (Normally Closed (NC))
       boolean s3 = true; // High level indicator in tank (Normally Closed (NC))
-      uint8_t temp = 20; //[C] Temperature sensor located inside tank 
+      float temp = 20; //[C] Temperature sensor located inside tank 
     
     // Program Variables (program variables)
       uint8_t counter = 0; // Counter used to count how many times sequence has looped
@@ -117,8 +117,8 @@
     
   //Setup of JSON // JSON is used as our communication data interchange between layers 
   
-    StaticJsonDocument<320> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document
-    StaticJsonDocument<75> JsonSerialReady; // This will destroy and recreate the document
+    StaticJsonDocument<380> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document
+    StaticJsonDocument<40> JsonSerialReady; // This will destroy and recreate the document
     
     void InitJsonMemory() { //Error "'JsonMemory' does not name a type" usually occurs when you try to use a variable outside of a function scope therefore it has its own function... run at void setup()...
     //Iniziation of variables to be written to JsonMemory
@@ -447,7 +447,7 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
       delay(10); // Just to keep it from going bananas
     }
 
-    delay(300); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
+    delay(500); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
     
     while (Serial.available() > 0) {
       c = (char)Serial.read(); // Read one character from the serial buffer
@@ -483,7 +483,7 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
 
 void loop(){
   // Call our functions
-delay(300);
+delay(1000);
     WriteInUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by SensorDataRead() // READ INPUT   
       StateMachine(); // Control Logic // Calling main function for executing process logic sequence        
     WriteOutUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by StateMachine() // UPDATE OUTPUT  
