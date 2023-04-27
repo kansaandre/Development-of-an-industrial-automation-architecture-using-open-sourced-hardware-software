@@ -1,6 +1,6 @@
-// LAST UPDATE (roughly): 26.04.2023 01:05
+// LAST UPDATE (roughly): 26.04.2023 02:30
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
-// NOTE! Code should not exceed 60 % Dynamic Memory usage! Causes early cut-off of strings with are written to the other layers in SensorLogicDataWrite() and ActuatorWrite().
+// NOTE! Code should not exceed 65 % Dynamic Memory usage! Causes early cut-off of strings with are written to the other layers in SensorLogicDataWrite() and ActuatorWrite().
 
 // NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
 // this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
@@ -20,8 +20,8 @@
 
 #include <ArduinoJson.h> // v6 used in v1.0 // https://arduinojson.org/ // JSON data compatability with Arduino
 
-//Enter "sudo nano /usr/share/arduino/hardware/arduino/avr/cores/arduino/HardwareSerial.h" and change from the default 64 byte buffer size (for UNO anyway) to 300 bytes by changing "#define SERIAL_RX_BUFFER_SIZE 300"
-  //This is neccessary to be able to receive the large JSON data string we are receving from the HMI layer (aka Node-RED)...
+//Enter "sudo nano /usr/share/arduino/hardware/arduino/avr/cores/arduino/HardwareSerial.h" and change from the default 64 byte buffer size (for UNO anyway) to 280 bytes by changing "#define SERIAL_RX_BUFFER_SIZE 300"
+  //This is neccessary to be able to receive the large JSON data string we are receving from the HMI layer (aka Node-RED)... Also change "#define SERIAL_TX_BUFFER_SIZE 10" instead of default 16 bytes. 
 
 //-------------------------------------------------------------------------------------------------------------------//
       
@@ -79,8 +79,8 @@
     
     //StateMachine()
       uint32_t current_time; // ms // Used to track time for a condition in one state in our StateMachine function
-      uint16_t TimeInSequence; // ms // Track time since we were last in state: Ready (meaning time since sequence begun)
-      uint16_t SetTimeInSequence; // ms // Time set since transition from ready to fill_A happens
+      uint32_t TimeInSequence; // ms // Track time since we were last in state: Ready (meaning time since sequence begun)
+      uint32_t SetTimeInSequence; // ms // Time set since transition from ready to fill_A happens
 
       const uint8_t TimeOut = 255; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
       boolean PreviouslyVisited = false; // Have we previously visited a case state in the StateMachine() switch function and completed instructions meant to only be done once?
@@ -99,8 +99,8 @@
     
   //Setup of JSON // JSON is used as our communication data interchange between layers 
   
-    StaticJsonDocument<200> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document
-    StaticJsonDocument<70> JsonSerialReady; // This will destroy and recreate the document
+    StaticJsonDocument<290> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document
+    StaticJsonDocument<75> JsonSerialReady; // This will destroy and recreate the document
     
     void InitJsonMemory() { //Error "'JsonMemory' does not name a type" usually occurs when you try to use a variable outside of a function scope therefore it has its own function... run at void setup()...
     //Iniziation of variables to be written to JsonMemory
@@ -313,8 +313,10 @@ void SensorLogicDataWrite() { // Step 2 (figure 9. thesis document v1.0)
     jsonstring = ""; // clear jsonstring
     
     serializeJson(JsonMemory, jsonstring); // Function that converts JSON object to a string.
+    JsonMemory.clear();
     Serial.println(jsonstring); // Function that prints text to the Serial Monitor.
     Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
+    jsonstring = "";
     
 }
 
@@ -331,8 +333,10 @@ void RequestLogicForceFreezeRead(boolean RequestOrderLogic) { // Allow step 4 to
     jsonstring = ""; // clear jsonstring
     
     serializeJson(JsonSerialReady, jsonstring); // Function that converts JSON object to a string.
+    JsonSerialReady.clear();
     Serial.println(jsonstring); // Function that prints text to the Serial Monitor.
     Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
+    jsonstring = "";
 }
 
 //----------------------------------------------------------
@@ -347,10 +351,10 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
     
     while ((Serial.available() == 0) and (millis() - SerialWait < SerialTimeOut)) {
     // Do nothing; just wait for data
-    delay(1); // Just to keep it from going bananas
+    delay(10); // Just to keep it from going bananas
     }
 
-    delay(175); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
+    delay(300); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
     
     while (Serial.available() > 0) {
       c = (char)Serial.read(); // Read one character from the serial buffer
@@ -365,6 +369,7 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
     
     if (error == DeserializationError::Ok){ // Used to check for errors when deserializing the jsonstring which just has been read from serial line
       jsonstringLastValid_LFFR = jsonstring; // Store the jsonstring we read out, it contain good data.
+      jsonstring = "";
     } else {
       
       String TempStr = ("DeserializationError in LogicForceFreezeRead: "); // Local variable, declared directly...
@@ -372,7 +377,6 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
       Serial.println(TempStr);  
       
       deserializeJson(JsonMemory, jsonstringLastValid_LFFR); // This function clear JsonMemory and fill it with last valid data we received from the HMI Layer.
-      delay(10); // Waiting 10 ms before continuing program, maybe serial commuication resolve...
       }
   } else {
       Serial.println("No data recieved from HMI Layer in LogicForceFreezeRead"); // Just for easy debugging in HMI Layer (node-red)
@@ -387,8 +391,10 @@ void ActuatorWrite() {
       jsonstring = ""; // clear jsonstring in case something already is on it.
       
       serializeJson(JsonMemory, jsonstring); // JsonMemory set in LogicForceFreezeRead()
+      JsonMemory.clear();
       Serial.println(jsonstring);
       Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
+      jsonstring = "";
 }
 
 //----------------------------------------------------------
@@ -403,8 +409,10 @@ void RequestSensorDataRead(boolean RequestOrderSensor) { // Allow step 4 to begi
     jsonstring = ""; // clear jsonstring
     
     serializeJson(JsonSerialReady, jsonstring); // Function that converts JSON object to a string.
+    JsonSerialReady.clear();
     Serial.println(jsonstring); // Function that prints text to the Serial Monitor.
     Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
+    jsonstring = "";
 
 }
 //----------------------------------------------------------
@@ -418,10 +426,10 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
     
     while ((Serial.available() == 0) and (millis() - SerialWait < SerialTimeOut)) {
     // Do nothing; just wait for data
-      delay(1); // Just to keep it from going bananas
+      delay(10); // Just to keep it from going bananas
     }
 
-    delay(175); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
+    delay(300); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
     
     while (Serial.available() > 0) {
       c = (char)Serial.read(); // Read one character from the serial buffer
@@ -436,13 +444,13 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
     
     if (error == DeserializationError::Ok){ // Used to check for errors when deserializing the jsonstring which just has been read from serial line
       jsonstringLastValid_SDR = jsonstring; // Store the jsonstring we read out, it contain good data.
+      jsonstring = "";
     } else {
       String TempStr = ("DeserializationError in SensorDataRead: "); // Local variable, declared directly... 
       TempStr.concat(error.c_str()); // Appending error message to TempStr
       Serial.println(TempStr);
       
       deserializeJson(JsonMemory, jsonstringLastValid_SDR); // This function clear JsonMemory and fill it with last valid data we received from the Process Layer.
-      delay(10); // Waiting 10 ms before continuing program, maybe serial commuication resolve...
       }
   } else {
       Serial.println("No data recieved from HMI Layer in SensorDataRead"); // Just for easy debugging in HMI Layer (node-red)
@@ -457,31 +465,19 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
 
 void loop(){
   // Call our functions
-delay(25000);
-    WriteInUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by SensorDataRead() // READ INPUT
-delay(50);    
-      StateMachine(); // Control Logic // Calling main function for executing process logic sequence
-delay(50);          
-    WriteOutUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by StateMachine() // UPDATE OUTPUT
-delay(50);   
+delay(300);
+    WriteInUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by SensorDataRead() // READ INPUT   
+      StateMachine(); // Control Logic // Calling main function for executing process logic sequence        
+    WriteOutUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by StateMachine() // UPDATE OUTPUT  
     SensorLogicDataWrite(); // Step 2 // Calling function that sends data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
-delay(50);
     //Step 3 - HMI Layer which includes the user interface with override functionality - Hosted in Node-RED. //The UI modifies the data sent to Node-RED in SensorLogicDataWrite() and returns the modified data in LogicForceFreezeRead()   
-delay(50);
-    RequestLogicForceFreezeRead(true); // Allow step 4 (LogicForceFreezeRead();) to begin by sending request of data to the HMI Layer (aka Node-RED) // set "gate" function node to true for allowed passage
-delay(50);    
+    RequestLogicForceFreezeRead(true); // Allow step 4 (LogicForceFreezeRead();) to begin by sending request of data to the HMI Layer (aka Node-RED) // set "gate" function node to true for allowed passage   
       LogicForceFreezeRead(); // Step 4 // Calling function that sends data from HMI Layer to Control Layer.
-delay(50);
-    RequestLogicForceFreezeRead(false); // Stop step 4 from sending data without request from the HMI Layer to the Control Layer (aka Arduino) // set "gate" function node to false for blockage
-delay(50);    
+    RequestLogicForceFreezeRead(false); // Stop step 4 from sending data without request from the HMI Layer to the Control Layer (aka Arduino) // set "gate" function node to false for blockage 
     ActuatorWrite(); // Step 5 + Step 6 where we read in the Json string "LogicForceFreezeRead" from HMI Layer, change flow property (ID of json data) and send it out of the Control Layer again.
-delay(50);
-    //Step 7 - Process Layer -> Simulation of the process which as of v1.0 is hosted in node-RED in a function node. Send in ActuatorWrite() json data and process react to it as a real-process and return sensor data in json format in the SensorDataRead() function.   
-delay(50);    
-    RequestSensorDataRead(true); // Allow step 8 (SensorDataRead();) to begin by sending request of data to the Process Layer (aka Node-RED for v1.0) // set "gate" function node to true for allowed passage
-delay(50);    
+    //Step 7 - Process Layer -> Simulation of the process which as of v1.0 is hosted in node-RED in a function node. Send in ActuatorWrite() json data and process react to it as a real-process and return sensor data in json format in the SensorDataRead() function.     
+    RequestSensorDataRead(true); // Allow step 8 (SensorDataRead();) to begin by sending request of data to the Process Layer (aka Node-RED for v1.0) // set "gate" function node to true for allowed passage    
       SensorDataRead(); // Step 8 // Return sensor value which are updated by the simulated process hosted in a function node in node-RED (as of v1.0). 
-delay(50);    
     RequestSensorDataRead(false); // Stop step 8 from sending data without request from the Process Layer to the Control Layer (aka Arduino) // set "gate" function node to false for blockage
 }
 
@@ -493,5 +489,5 @@ void setup(){ // The setup() function is executed only once, when the Arduino bo
     
 //Serial communication setup
   Serial.begin(38400); // //9600 baud per seconds (bits per seconds)
-  delay(5000); // Wait until serial commuication is up and running before "starting" program.
+  delay(10000); // Wait until serial commuication is up and running before "starting" program.
 }
