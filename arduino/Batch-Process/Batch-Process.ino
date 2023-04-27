@@ -1,27 +1,45 @@
-// LAST UPDATE (roughly): 26.04.2023 02:30
-// Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
-// NOTE! Code should not exceed 65 % Dynamic Memory usage! Causes early cut-off of strings with are written to the other layers in SensorLogicDataWrite() and ActuatorWrite().
+// LAST UPDATE (roughly): 26.04.2023 02:57
 
-// NOTE! In code, a lot of referencing to the thesis document is done to clarify/document code
-// this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <---------- , 
-// remember to UPDATE with NEW versions/iterations of the thesis document. Document version seen in front page.
+// Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
+
+// NOTE! 
+  //Code should not exceed 65 % Dynamic Memory usage! (for UNO arduino board anyway). Causes early cut-off of strings with are written to the other layers in SensorLogicDataWrite() and ActuatorWrite().
+  //Highly recommend another board with more memory available. 
+  
+// NOTE! 
+  //In code, a lot of referencing to the thesis document is done to clarify/document code
+  // this currently is referencing to thesis version ------->  version. 1.0 = v.1.0  <----------  
+  // , especially fig 9. from thesis v1.0 is of relevance. Remember to UPDATE with NEW 
+  // versions/iterations of the thesis document. Document version seen in front page.
 
 // Short description about the project:
-// This open-source, community-driven project aims to develop an industrial automation architecture. 
-// Its vast resources, including source code, forums, and documentation, make it easier to integrate 
-// AI tools like ChatGPT, aiding coding, architecture design, and hardware selection. 
-// This sets it apart from confidential industrial vendors.
+  //This open-source, community-driven project aims to develop
+  //an industrial automation architecture. Open-source vast resources, including
+  //source code, forums, libraries and documentation, make it easier to integrate AI
+  //tools like ChatGPT, aiding coding, architecture design, troubleshooting and
+  //hardware selection. This sets it apart from confidential industrial vendors.
 
-//INDUSTRIAL AUTOMATION ARCHITECTURE
-  //DATASTORAGE-LAYER = DGRAPH 
-  //HMI-LAYER = NODE-RED
-  //CONTROL-LAYER = ARDUINO (HERE)
-  //PROCESS-LAYER = SENSORS (SIMULATED BY NODE-RED)
 
+// INDUSTRIAL AUTOMATION ARCHITECTURE // ACRONYMS
+  // DATASTORAGE-LAYER = DGRAPH 
+  // HMI-LAYER = NODE-RED
+  // CONTROL-LAYER = ARDUINO (HERE)
+  // PROCESS-LAYER = SENSORS (SIMULATED BY NODE-RED)
+
+// ACRONYMS FLOWS (disclaimer; not a fan of acronyms in any way but sure do they save memory usage...) // Note, see fig 9. thesis document v1.0 for graphical overview of what these flow names indicate and what direction they have.
+  // SLDW = SensorLogicDataWrite
+  // LFFR = LogicForceFreezeRead
+  // AW = ActuatorWrite
+  // SDR = SensorDataRead
+  // RLFFR = RequestLogicForceFreezeRead
+
+  // ACRONYMS BELOW SET IN NODE-RED
+    // SLDW = SensorLogicDataWrite
+  
 #include <ArduinoJson.h> // v6 used in v1.0 // https://arduinojson.org/ // JSON data compatability with Arduino
 
 //Enter "sudo nano /usr/share/arduino/hardware/arduino/avr/cores/arduino/HardwareSerial.h" and change from the default 64 byte buffer size (for UNO anyway) to 280 bytes by changing "#define SERIAL_RX_BUFFER_SIZE 300"
-  //This is neccessary to be able to receive the large JSON data string we are receving from the HMI layer (aka Node-RED)... Also change "#define SERIAL_TX_BUFFER_SIZE 10" instead of default 16 bytes. 
+  //This is neccessary to be able to receive the large JSON data string we are receving from the HMI layer (aka Node-RED)... Also change "#define SERIAL_TX_BUFFER_SIZE 10" instead of default 16 bytes.. 
 
 //-------------------------------------------------------------------------------------------------------------------//
       
@@ -99,7 +117,7 @@
     
   //Setup of JSON // JSON is used as our communication data interchange between layers 
   
-    StaticJsonDocument<290> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document
+    StaticJsonDocument<320> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document
     StaticJsonDocument<75> JsonSerialReady; // This will destroy and recreate the document
     
     void InitJsonMemory() { //Error "'JsonMemory' does not name a type" usually occurs when you try to use a variable outside of a function scope therefore it has its own function... run at void setup()...
@@ -309,7 +327,7 @@ void SensorLogicDataWrite() { // Step 2 (figure 9. thesis document v1.0)
 
   // Sensor & Logic data write - Send data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
   
-    JsonMemory["flow"] = "SensorLogicDataWrite"; // Identification property in our JSON data // used with figure 9. from thesis document v1.0.    
+    JsonMemory["flow"] = "SLDW"; // Identification property in our JSON data // used with figure 9. from thesis document v1.0.    
     jsonstring = ""; // clear jsonstring
     
     serializeJson(JsonMemory, jsonstring); // Function that converts JSON object to a string.
@@ -327,7 +345,7 @@ void RequestLogicForceFreezeRead(boolean RequestOrderLogic) { // Allow step 4 to
     SerialReady = RequestOrderLogic; // Ready to listen to serial line and read out "LogicForceFreezeRead". Due to size, it must be done directly and we can not "store" it in Serial Buffer (at least for UNO)...
 
     JsonSerialReady.clear(); // Clear data stored in JsonSerialReady
-    JsonSerialReady["flow"] = "RequestLogicForceFreezeRead"; // Identification property of flow
+    JsonSerialReady["flow"] = "RLFFR"; // Identification property of flow
     JsonSerialReady["SerialReady"] = SerialReady; // Signalling to Node-RED that we are ready to read serial data from it.
     
     jsonstring = ""; // clear jsonstring
@@ -387,7 +405,7 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
 
 void ActuatorWrite() {
     
-      JsonMemory["flow"] = "ActuatorWrite";  // Identification property // set by input to function.
+      JsonMemory["flow"] = "AW";  // Identification property // set by input to function.
       jsonstring = ""; // clear jsonstring in case something already is on it.
       
       serializeJson(JsonMemory, jsonstring); // JsonMemory set in LogicForceFreezeRead()
@@ -403,7 +421,7 @@ void RequestSensorDataRead(boolean RequestOrderSensor) { // Allow step 4 to begi
     SerialReady = RequestOrderSensor; // Ready to listen to serial line and read out "LogicForceFreezeRead". Due to size, it must be done directly and we can not "store" it in Serial Buffer (at least for UNO)...
     
     JsonSerialReady.clear(); // Clear data stored in JsonSerialReady
-    JsonSerialReady["flow"] = "RequestSensorDataRead"; // Identification property of flow
+    JsonSerialReady["flow"] = "RSDR"; // Identification property of flow
     JsonSerialReady["SerialReady"] = SerialReady; // Signalling to Node-RED that we are ready to read serial data from it.
     
     jsonstring = ""; // clear jsonstring
