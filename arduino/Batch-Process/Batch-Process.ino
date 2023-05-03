@@ -1,9 +1,9 @@
-// LAST UPDATE (roughly): 04.05.2023 01:16
+// LAST UPDATE (roughly): 04.05.2023 01:49
 
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! 
-  //Code should not exceed 65 % Dynamic Memory usage! (for UNO arduino board anyway). Causes early cut-off of strings with are written to the other layers in SensorLogicDataWrite() and ActuatorWrite().
+  //Code should not exceed 60 % Dynamic Memory usage! (for UNO arduino board anyway). Causes early cut-off of strings with are written to the other layers in SensorLogicDataWrite() and ActuatorWrite().
   //Highly recommend another board with more memory available. 
   
 // NOTE! 
@@ -153,10 +153,6 @@
 
 void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
 
-    Serial.print("Free SRAM memory WIUV: ");
-    Serial.println(freeMemory());
-
-
   // Step 1 - Write In Updated Variables updated - (see Figure 9. from thesis document v1.0)
   // Here we will update our variables found in Arduino code before StateMachine(), is called. 
   // This is similar to PLC where we update our variables from the process before running the main program.
@@ -195,9 +191,6 @@ void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
 //-------------------------------------------------------------------------------------------------------------------//
 
 void StateMachine(){ // Main function for executing process logic sequence // Control Process Logic Loop (see Figure 8. in thesis document v1.0)
-
-  Serial.print("Free SRAM memory SM: ");
-  Serial.println(freeMemory());
 
   switch (state) { 
 //----------   
@@ -308,8 +301,6 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
 //----------------------------------------------------------
 
 void WriteOutUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
-  Serial.print("Free SRAM memory WOUV: ");
-  Serial.println(freeMemory());
 
   // Step 1 - Write Out Updated Variables updated - (see Figure 9. from thesis document v1.0)
   // Here we will update our variables found in Arduino code after control code, StateMachine(), is called. 
@@ -342,9 +333,6 @@ void WriteOutUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
 //----------------------------------------------------------
 
 void SensorLogicDataWrite() { // Step 2 (figure 9. thesis document v1.0)
-  Serial.print("Free SRAM memory SLDW: ");
-  Serial.println(freeMemory());
-
   // Sensor & Logic data write - Send data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
   
     JsonMemory["flow"] = "SLDW"; // Identification property in our JSON data // used with figure 9. from thesis document v1.0.    
@@ -361,9 +349,6 @@ void SensorLogicDataWrite() { // Step 2 (figure 9. thesis document v1.0)
 //----------------------------------------------------------
 
 void RequestLogicForceFreezeRead(boolean RequestOrderLogic) { // Allow step 4 to begin by sending request of data to the HMI Layer (aka Node-RED)
-  Serial.print("Free SRAM memory RLFFR: ");
-  Serial.println(freeMemory());
-
   // Request sent to HMI Layer (Node-RED) as LogicForceFreezeRead JSON
     SerialReady = RequestOrderLogic; // Ready to listen to serial line and read out "LogicForceFreezeRead". Due to size, it must be done directly and we can not "store" it in Serial Buffer (at least for UNO)...
 
@@ -383,8 +368,6 @@ void RequestLogicForceFreezeRead(boolean RequestOrderLogic) { // Allow step 4 to
 //----------------------------------------------------------
 
 void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
-  Serial.print("Free SRAM memory LFFR: ");
-  Serial.println(freeMemory());
   // Step 4 - Logic force & freeze read - Send data from HMI Layer to Control Layer. Here we send the exact same data as in step 2
   // - but update our variables from the user interface inputs.
    
@@ -394,6 +377,7 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
     
     while ((Serial.available() == 0) and (millis() - SerialWait < SerialTimeOut)) {
     // Do nothing; just wait for data
+    Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
     delay(10); // Just to keep it from going bananas
     }
 
@@ -431,9 +415,6 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
 //----------------------------------------------------------
 
 void ActuatorWrite() {
-  Serial.print("Free SRAM memory AW: ");
-  Serial.println(freeMemory());
-    
       JsonMemory["flow"] = "AW";  // Identification property // set by input to function.
       jsonstring = ""; // clear jsonstring in case something already is on it.
       
@@ -446,8 +427,6 @@ void ActuatorWrite() {
 
 //----------------------------------------------------------
 void RequestSensorDataRead(boolean RequestOrderSensor) { // Allow step 4 to begin by sending request of data to the HMI Layer (aka Node-RED)
-  Serial.print("Free SRAM memory RSDR: ");
-  Serial.println(freeMemory());
   // Request sent to HMI Layer (Node-RED) as LogicForceFreezeRead JSON
     SerialReady = RequestOrderSensor; // Ready to listen to serial line and read out "LogicForceFreezeRead". Due to size, it must be done directly and we can not "store" it in Serial Buffer (at least for UNO)...
     
@@ -467,8 +446,6 @@ void RequestSensorDataRead(boolean RequestOrderSensor) { // Allow step 4 to begi
 //----------------------------------------------------------
 
 void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
-  Serial.print("Free SRAM memory SDR: ");
-  Serial.println(freeMemory());
   // Step 8 - Sensor data read - Send data from Process Layer to Control Layer (aka here). 
 
   // Listen to serial port and read out JSON data from Process Layer
@@ -477,6 +454,7 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
     
     while ((Serial.available() == 0) and (millis() - SerialWait < SerialTimeOut)) {
     // Do nothing; just wait for data
+      Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
       delay(10); // Just to keep it from going bananas
     }
 
@@ -487,26 +465,24 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
       jsonstring += c;
   }
 
-    //delay(250); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
-
     // Check if any data was received
     if (jsonstring.length() > 0) {
 
-    DeserializationError error = deserializeJson(JsonMemory, jsonstring); 
+      DeserializationError error = deserializeJson(JsonMemory, jsonstring); 
     
-    if ((error == DeserializationError::Ok)){ // Used to check for errors when deserializing the jsonstring which just has been read from serial line
-      jsonstringLastValid_SDR = jsonstring; // Store the jsonstring we read out, it contain good data.
-      jsonstring = "";
-      
-    } else {
-      
-        String TempStr = ("DeserializationError in SensorDataRead: "); // Local variable, declared directly... 
-        TempStr.concat(error.c_str()); // Appending error message to TempStr
-        Serial.println(TempStr);
-
-        deserializeJson(JsonMemory, jsonstringLastValid_SDR); // This function clear JsonMemory and fill it with last valid data we received from the Process Layer.          
-        jsonstringLastValid_SDR = "";
-      }
+      if ((error == DeserializationError::Ok)){ // Used to check for errors when deserializing the jsonstring which just has been read from serial line
+        jsonstringLastValid_SDR = jsonstring; // Store the jsonstring we read out, it contain good data.
+        jsonstring = "";
+        
+      } else {
+        
+          String TempStr = ("DeserializationError in SensorDataRead: "); // Local variable, declared directly... 
+          TempStr.concat(error.c_str()); // Appending error message to TempStr
+          Serial.println(TempStr);
+  
+          deserializeJson(JsonMemory, jsonstringLastValid_SDR); // This function clear JsonMemory and fill it with last valid data we received from the Process Layer.          
+          jsonstringLastValid_SDR = "";
+        }
   } else {
       Serial.println("No data recieved from HMI Layer in SensorDataRead"); // Just for easy debugging in HMI Layer (node-red)
     }
