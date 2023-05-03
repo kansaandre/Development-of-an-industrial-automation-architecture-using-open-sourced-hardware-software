@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 27.04.2023 21:46
+// LAST UPDATE (roughly): 04.05.2023 01:10
 
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
@@ -32,6 +32,12 @@
   // AW = ActuatorWrite
   // SDR = SensorDataRead
   // RLFFR = RequestLogicForceFreezeRead
+  // TIS = TimeInSequence
+  // TR = TimeRunning
+  // ORM = OverRideMode
+  // vA = ValveA
+  // vB = ValveB
+  // vC = ValveC
 
   // ACRONYMS BELOW SET IN NODE-RED
     // SLDW = SensorLogicDataWrite
@@ -54,22 +60,22 @@
     // Actuators (output)
       boolean heater = false; // Heater for heating up tank
       boolean stirrer = false; // Stirrer for stirring up tank
-      boolean valveA = false; // Inlet valve for chemical A
-      boolean valveB = false; // Inlet valve for chemical B
-      boolean valveC = false; // Outlet valve for chemical C
+      boolean vA = false; // Inlet valve for chemical A
+      boolean vB = false; // Inlet valve for chemical B
+      boolean vC = false; // Outlet valve for chemical C
     
     // Sensors (input)
       boolean s1 = true; // Low level indicator in tank (Normally Closed (NC)) 
       boolean s2 = true; // Medium level indicator in tank (Normally Closed (NC))
       boolean s3 = true; // High level indicator in tank (Normally Closed (NC))
-      float temp = 20; //[C] Temperature sensor located inside tank 
+      uint8_t temp = 20; //[C] Temperature sensor located inside tank 
     
     // Program Variables (program variables)
       uint8_t counter = 0; // Counter used to count how many times sequence has looped
       String flow = ""; // Variable used to identify string when sent on serial line in JSON format
-      boolean overridemode = false; // Set in the UI when operators/engineers override values manually
-      uint8_t TimeInSequenceJSON; // s // TimeInSequence varible divided by 1000 = seconds since sequence was started
-      uint16_t TimeRunningJSON; // s // TimeRunning variable divided by 1000 = seconds since program was uplodaded to microcontroller
+      boolean ORM = false; // Set in the UI when operators/engineers override values manually
+      uint8_t TISJSON; // s // TimeInSequence varible divided by 1000 = seconds since sequence was started
+      uint16_t TRJSON; // s // TimeRunning variable divided by 1000 = seconds since program was uplodaded to microcontroller
     
     // JSON declaration variables
       String jsonstring = ""; // Used to send/receive JSON as string between layers
@@ -97,7 +103,7 @@
     
     //StateMachine()
       uint32_t current_time; // ms // Used to track time for a condition in one state in our StateMachine function
-      uint32_t TimeInSequence; // ms // Track time since we were last in state: Ready (meaning time since sequence begun)
+      uint32_t TIS; // ms // Track time since we were last in state: Ready (meaning time since sequence begun)
       uint32_t SetTimeInSequence; // ms // Time set since transition from ready to fill_A happens
 
       const uint8_t TimeOut = 255; // ms // Maximum time allowed to stay inside StateMachine() loop before condition is met jumping back to void loop() (Too low value cause errors due to variables not being properly set CAREFUL)
@@ -114,10 +120,11 @@
 
     //SensorDataRead
       String jsonstringLastValid_SDR = ""; // SDR = SensorDataRead. Store last valid jsonstring that was read from SerialLine. Used in case we get error when deserializing new incoming jsonstring. 
+
     
   //Setup of JSON // JSON is used as our communication data interchange between layers 
   
-    StaticJsonDocument<380> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document
+    StaticJsonDocument<300> JsonMemory; // Estimated from https://arduinojson.org/v6/assistant/#/step3 (18.04.2023) // This will destroy and recreate the document
     StaticJsonDocument<40> JsonSerialReady; // This will destroy and recreate the document
     
     void InitJsonMemory() { //Error "'JsonMemory' does not name a type" usually occurs when you try to use a variable outside of a function scope therefore it has its own function... run at void setup()...
@@ -127,9 +134,9 @@
       JsonMemory["stop2"] = stop2;
       JsonMemory["heater"] = heater;
       JsonMemory["stirrer"] = stirrer;
-      JsonMemory["valveA"] = valveA;
-      JsonMemory["valveB"] = valveB;
-      JsonMemory["valveC"] = valveC;
+      JsonMemory["vA"] = vA;
+      JsonMemory["vB"] = vB;
+      JsonMemory["vC"] = vC;
       JsonMemory["s1"] = s1;
       JsonMemory["s2"] = s2;
       JsonMemory["s3"] = s3;
@@ -137,9 +144,9 @@
       JsonMemory["state"] = state;
       JsonMemory["counter"] = counter;
       JsonMemory["flow"] = flow;
-      JsonMemory["overridemode"] = overridemode;
-      JsonMemory["TimeInSequence"] = TimeInSequenceJSON;
-      JsonMemory["TimeRunning"] = TimeRunningJSON;
+      JsonMemory["ORM"] = ORM;
+      JsonMemory["TIS"] = TISJSON;
+      JsonMemory["TR"] = TRJSON;
     }
         
 //-------------------------------------------------------------------------------------------------------------------//
@@ -154,7 +161,7 @@ void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
 
   // Initialize JSON 
     if (i == false){
-      //JsonMemory.clear(); // Clear data stored in JsonMemory 
+      JsonMemory.clear(); // Clear data stored in JsonMemory 
       InitJsonMemory(); // Function that initializes the JsonMemory object with the desired values only first time WriteInUpdatedVariables() is called
       i = true;
     }
@@ -165,9 +172,9 @@ void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
     stop2 = JsonMemory["stop2"];
     heater = JsonMemory["heater"];
     stirrer = JsonMemory["stirrer"];
-    valveA = JsonMemory["valveA"];
-    valveB = JsonMemory["valveB"];
-    valveC = JsonMemory["valveC"];
+    vA = JsonMemory["vA"];
+    vB = JsonMemory["vB"];
+    vC = JsonMemory["vC"];
     s1 = JsonMemory["s1"];
     s2 = JsonMemory["s2"];
     s3 = JsonMemory["s3"];
@@ -175,7 +182,9 @@ void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
     state = JsonMemory["state"];
     counter = JsonMemory["counter"];
     flow = JsonMemory["flow"].as<String>();
-    overridemode = JsonMemory["overridemode"];
+    ORM = JsonMemory["ORM"];
+    
+    JsonMemory.clear();
     
 }
 
@@ -202,7 +211,7 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
           PreviouslyVisited = true; // Set true so instruction above do not happen every main loop() we do.
       }
       
-      valveA = true; // Open inlet valve A for chemical A // This instruction should be done every time we loop the main loop() function
+      vA = true; // Open inlet valve A for chemical A // This instruction should be done every time we loop the main loop() function
                      // as we might need to set variable to "correct" value if override in HMI has been set and then removed.
       
       if ((s2 == false) || (stop2 == true)) { // Condition to change state (the transition) 
@@ -214,8 +223,8 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
 //----------
     case fill_B: // The step instructions 
          
-      valveA = false; // Close valve A
-      valveB = true; // Open inlet valve B for chemical B
+      vA = false; // Close valve A
+      vB = true; // Open inlet valve B for chemical B
       stirrer = true; // Start stirrer for mixing chemicals A and B
       heater = true; // Start heater for warming up the mixture
 
@@ -228,7 +237,7 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
 //----------
     case heating: // The step instructions
 
-      valveB = false; //Stop filling 
+      vB = false; //Stop filling 
      
       if (temp >= 85 || stop2) { // Condition to change state (the transition)
         state = wait; // Change state to wait when the temperature reaches a certain level or stop2 is true
@@ -253,7 +262,7 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
     case drain1: // The step instructions 
 
       heater = false; // Stop heater
-      valveC = true; // Open outlet valve C for draining the mixture
+      vC = true; // Open outlet valve C for draining the mixture
 
       if (s2 || stop2) { // Condition to change state (the transition)
         state = drain2; // Change state to drain2 when tank level is below medium level indicator or stop2 is true
@@ -279,14 +288,14 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
   }
     
   if (state == ready){
-    TimeInSequence = 0; // Reset sequence time tracker
+    TIS = 0; // Reset sequence time tracker
   } else if ((state != ready) and (state != pause)){
-    TimeInSequence = millis()- SetTimeInSequence; // Update time spent in sequence (Time since sketch was uploaded - Time since start button was pressed)
+    TIS = millis()- SetTimeInSequence; // Update time spent in sequence (Time since sketch was uploaded - Time since start button was pressed)
     } 
 
   // Keep track of / Update - our time variables, see declaration for more info.
-    TimeInSequenceJSON = TimeInSequence/1000; // s
-    TimeRunningJSON = millis()/1000; // s
+    TISJSON = TIS/1000; // s
+    TRJSON = millis()/1000; // s
 }
 
 //----------------------------------------------------------
@@ -306,9 +315,9 @@ void WriteOutUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
     JsonMemory["stop2"] = stop2;
     JsonMemory["heater"] = heater;
     JsonMemory["stirrer"] = stirrer;
-    JsonMemory["valveA"] = valveA;
-    JsonMemory["valveB"] = valveB;
-    JsonMemory["valveC"] = valveC;
+    JsonMemory["vA"] = vA;
+    JsonMemory["vB"] = vB;
+    JsonMemory["vC"] = vC;
     JsonMemory["s1"] = s1;
     JsonMemory["s2"] = s2;
     JsonMemory["s3"] = s3;
@@ -316,9 +325,9 @@ void WriteOutUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
     JsonMemory["state"] = state;
     JsonMemory["counter"] = counter;
     JsonMemory["flow"] = flow;
-    JsonMemory["overridemode"] = overridemode;   
-    JsonMemory["TimeInSequence"] = TimeInSequenceJSON; //Kept track on only in Arduino // Meaning is only declared/updated/changed in the  Arduino (Control Layer)
-    JsonMemory["TimeRunning"] = TimeRunningJSON; //Kept track on only in Arduino // Meaning is only declared/updated/changed in the Arduino (Control Layer)
+    JsonMemory["ORM"] = ORM;   
+    JsonMemory["TIS"] = TISJSON; //Kept track on only in Arduino // Meaning is only declared/updated/changed in the  Arduino (Control Layer)
+    JsonMemory["TR"] = TRJSON; //Kept track on only in Arduino // Meaning is only declared/updated/changed in the Arduino (Control Layer)
 }
 
 //----------------------------------------------------------
@@ -372,7 +381,7 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
     delay(10); // Just to keep it from going bananas
     }
 
-    delay(300); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
+    delay(250); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
     
     while (Serial.available() > 0) {
       c = (char)Serial.read(); // Read one character from the serial buffer
@@ -395,10 +404,12 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
       Serial.println(TempStr);  
       
       deserializeJson(JsonMemory, jsonstringLastValid_LFFR); // This function clear JsonMemory and fill it with last valid data we received from the HMI Layer.
+      jsonstringLastValid_LFFR = "";
       }
   } else {
       Serial.println("No data recieved from HMI Layer in LogicForceFreezeRead"); // Just for easy debugging in HMI Layer (node-red)
     }
+  jsonstring = "";
 }
    
 //----------------------------------------------------------
@@ -447,12 +458,13 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
       delay(10); // Just to keep it from going bananas
     }
 
-    delay(500); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
+    delay(250); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
     
     while (Serial.available() > 0) {
       c = (char)Serial.read(); // Read one character from the serial buffer
       jsonstring += c;
   }
+
     //delay(250); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
 
     // Check if any data was received
@@ -460,19 +472,23 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
 
     DeserializationError error = deserializeJson(JsonMemory, jsonstring); 
     
-    if (error == DeserializationError::Ok){ // Used to check for errors when deserializing the jsonstring which just has been read from serial line
+    if ((error == DeserializationError::Ok)){ // Used to check for errors when deserializing the jsonstring which just has been read from serial line
       jsonstringLastValid_SDR = jsonstring; // Store the jsonstring we read out, it contain good data.
       jsonstring = "";
-    } else {
-      String TempStr = ("DeserializationError in SensorDataRead: "); // Local variable, declared directly... 
-      TempStr.concat(error.c_str()); // Appending error message to TempStr
-      Serial.println(TempStr);
       
-      deserializeJson(JsonMemory, jsonstringLastValid_SDR); // This function clear JsonMemory and fill it with last valid data we received from the Process Layer.
+    } else {
+      
+        String TempStr = ("DeserializationError in SensorDataRead: "); // Local variable, declared directly... 
+        TempStr.concat(error.c_str()); // Appending error message to TempStr
+        Serial.println(TempStr);
+
+        deserializeJson(JsonMemory, jsonstringLastValid_SDR); // This function clear JsonMemory and fill it with last valid data we received from the Process Layer.          
+        jsonstringLastValid_SDR = "";
       }
   } else {
       Serial.println("No data recieved from HMI Layer in SensorDataRead"); // Just for easy debugging in HMI Layer (node-red)
     }
+  jsonstring = "";
 }
 
 //-------------------------------------------------------------------------------------------------------------------//
@@ -483,7 +499,7 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
 
 void loop(){
   // Call our functions
-delay(1000);
+delay(1500);
     WriteInUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by SensorDataRead() // READ INPUT   
       StateMachine(); // Control Logic // Calling main function for executing process logic sequence        
     WriteOutUpdatedVariables(); // Step 1 // Calling function that writes In Updated Variables updated by StateMachine() // UPDATE OUTPUT  
