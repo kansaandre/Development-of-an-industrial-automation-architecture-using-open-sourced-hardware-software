@@ -1,4 +1,4 @@
-// LAST UPDATE (roughly): 05.05.2023 23:55 // git username of last person to update: kansaandre
+// LAST UPDATE (roughly): 06.05.2023 00:21 // git username of last person to update: kansaandre
 
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
@@ -391,15 +391,18 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
   }
   jsonstring[k] = '\0'; // Terminate character string that has been recieved so Serial.print know what to transmitt on serial line
       
-  if (jsonstring.length() > 0) {
+  if (strlen(jsonstring) > 0) {
 
     DeserializationError error = deserializeJson(JsonMemory, jsonstring); 
     
     if (error == DeserializationError::Ok){ // Used to check for errors when deserializing the jsonstring which just has been read from serial line
-      std::copy(jsonstring, jsonstring + sizeof(jsonstring), jsonstringLastValid_LFFR);  // Store the jsonstring we read out, it contain good data. Note, include null terminator \0
+      for (uint8_t i = 0; i = strlen(jsonstring) + 1; i++) { // Store the jsonstring we read out, it contain good data. Note, include null terminator \0
+        jsonstringLastValid_LFFR[i] = jsonstring[i];
+      }    
     } else {  
-        Serial.printf("DeserializationError in LogicForceFreezeRead: %s\n", error.c_str()); 
-        
+        Serial.print("DeserializationError in LogicForceFreezeRead: ");
+        Serial.println(error.c_str());
+                
         deserializeJson(JsonMemory, jsonstringLastValid_LFFR); // This function clear JsonMemory and fill it with last valid data we received from the HMI Layer.
       }
   } else {
@@ -457,14 +460,18 @@ void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
   jsonstring[k] = '\0'; // Terminate character string that has been recieved so Serial.print know what to transmitt on serial line
       
   // Check if any data was received
-  if (jsonstring.length() > 0) {
+  if (strlen(jsonstring) > 0) {
 
     DeserializationError error = deserializeJson(JsonMemory, jsonstring); 
   
     if ((error == DeserializationError::Ok)){ // Used to check for errors when deserializing the jsonstring which just has been read from serial line
-      std::copy(jsonstring, jsonstring + sizeof(jsonstring), jsonstringLastValid_SDR);  // Store the jsonstring we read out, it contain good data. Note, include null terminator \0
+      for (uint8_t i = 0; i = strlen(jsonstring) + 1; i++) { // Store the jsonstring we read out, it contain good data. Note, include null terminator \0 by adding "+1"
+        jsonstringLastValid_SDR[i] = jsonstring[i];
+      }
+  
     } else {
-        Serial.printf("DeserializationError in SerialDataRead: %s\n", error.c_str()); 
+        Serial.print("DeserializationError in SerialDataRead: ");
+        Serial.println(error.c_str());
 
         deserializeJson(JsonMemory, jsonstringLastValid_SDR); // This function clear JsonMemory and fill it with last valid data we received from the Process Layer.          
       }
