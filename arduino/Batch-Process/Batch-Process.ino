@@ -1,10 +1,11 @@
-// LAST UPDATE (roughly): 04.05.2023 01:49
+// LAST UPDATE (roughly): 05.05.2023 23:55 // git username of last person to update: kansaandre
 
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
 // NOTE! 
-  //Code should not exceed 60 % Dynamic Memory usage! (for UNO arduino board anyway). Causes early cut-off of strings with are written to the other layers in SensorLogicDataWrite() and ActuatorWrite().
-  //Highly recommend another board with more memory available. 
+  //Be careful with dynamic memory allocation as strings or json documents.
+  //Causes early cut-off of strings with are written to the other layers in SensorLogicDataWrite() and ActuatorWrite().
+  //To avoid this static character arrays are used instead of strings as well as json document are declared statically. 
   
 // NOTE! 
   //In code, a lot of referencing to the thesis document is done to clarify/document code
@@ -24,7 +25,7 @@
   // DATASTORAGE-LAYER = DGRAPH 
   // HMI-LAYER = NODE-RED
   // CONTROL-LAYER = ARDUINO (HERE)
-  // PROCESS-LAYER = SENSORS (SIMULATED BY NODE-RED)
+  // PROCESS-LAYER = SENSORS/ACTUATORS (SIMULATED BY NODE-RED)
 
 // ACRONYMS FLOWS (disclaimer; not a fan of acronyms in any way but sure do they save memory usage...) // Note, see fig 9. thesis document v1.0 for graphical overview of what these flow names indicate and what direction they have.
   // SLDW = SensorLogicDataWrite
@@ -45,7 +46,7 @@
 #include <ArduinoJson.h> // v6 used in v1.0 // https://arduinojson.org/ // JSON data compatability with Arduino
 
 //Enter "sudo nano /usr/share/arduino/hardware/arduino/avr/cores/arduino/HardwareSerial.h" and change from the default 64 byte buffer size (for UNO anyway) to 260 bytes by changing "#define SERIAL_RX_BUFFER_SIZE 260"
-  //This is neccessary to be able to receive the large JSON data string we are receving from the HMI layer (aka Node-RED)... Also change "#define SERIAL_TX_BUFFER_SIZE 16" instead of default 64 bytes.. 
+  //This is neccessary to be able to receive the large JSON data string we are receving from the HMI layer (aka Node-RED)... Also change "#define SERIAL_TX_BUFFER_SIZE 16" instead of default 64 bytes, free up more memory for us.
 
 //-------------------------------------------------------------------------------------------------------------------//
       
@@ -72,13 +73,15 @@
     
     // Program Variables (program variables)
       uint8_t counter = 0; // Counter used to count how many times sequence has looped
-      String flow = ""; // Variable used to identify string when sent on serial line in JSON format
+      //String flow = ""; // Variable used to identify string when sent on serial line in JSON format
+      char flow[8] = ""; // Variable used to identify string when sent on serial line in JSON format
       boolean ORM = false; // Set in the UI when operators/engineers override values manually
       uint8_t TISJSON; // s // TimeInSequence varible divided by 1000 = seconds since sequence was started
       uint16_t TRJSON; // s // TimeRunning variable divided by 1000 = seconds since program was uplodaded to microcontroller
     
     // JSON declaration variables
-      String jsonstring = ""; // Used to send/receive JSON as string between layers
+      //String jsonstring = ""; // Used to send/receive JSON as string between layers
+      char jsonstring[255] = ""; // Used to send/receive JSON as string between layers // Note that max strings allowed is 254 characters, 1 automatically is allocated to null termination \0
       boolean SerialReady = false; // Used for handshake agreement when HMI Layer is to send data to Control Layer.
                                    // Needed to make sure we are listening on the serial port before the large JSON
                                    // data string is sent. Can be removed with larger serial receiver buffer....
@@ -114,13 +117,18 @@
       uint8_t SerialTimeOut = 255; // ms // If no data arrive within said timeout, we jump out of while loop.
 
     //LogicForceFreezeRead() 
-      char c; // When we read character by character from large JSON data that is sent to this layer, the Control Layer.
-            // Must be done this way due to small receiver serial buffer layer (64 bytes for Arduno UNO microcontroller)
-      String jsonstringLastValid_LFFR = ""; // LFFR = LogicForceFreezeRead. Store last valid jsonstring that was read from SerialLine. Used in case we get error when deserializing new incoming jsonstring. 
-
+      char c; // When we read character by character from rx buffer that has been sent to this layer, the Control Layer.
+      uint8_t k; // Array position selector as we read the rx buffer to the character array "jsonscript"
+            
+      //String jsonstringLastValid_LFFR = ""; // LFFR = LogicForceFreezeRead. Store last valid jsonstring that was read from SerialLine. Used in case we get error when deserializing new incoming jsonstring. 
+      char jsonstringLastValid_LFFR[255] = "";// LFFR = LogicForceFreezeRead. Store last valid jsonstring that was read from SerialLine. Used in case we get error when deserializing new incoming jsonstring.
+                                              // Note that max strings allowed is 254 characters, 1 automatically is allocated to null termination \0
     //SensorDataRead
-      String jsonstringLastValid_SDR = ""; // SDR = SensorDataRead. Store last valid jsonstring that was read from SerialLine. Used in case we get error when deserializing new incoming jsonstring. 
+      //String jsonstringLastValid_SDR = ""; // SDR = SensorDataRead. Store last valid jsonstring that was read from SerialLine. Used in case we get error when deserializing new incoming jsonstring. 
+      char jsonstringLastValid_SDR[255] = ""; // LFFR = LogicForceFreezeRead. Store last valid jsonstring that was read from SerialLine. Used in case we get error when deserializing new incoming jsonstring.
+                                              // Note that max strings allowed is 254 characters, 1 automatically is allocated to null termination \0 
 
+  
     
   //Setup of JSON // JSON is used as our communication data interchange between layers 
   
@@ -181,11 +189,10 @@ void WriteInUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
     temp = JsonMemory["temp"];
     state = JsonMemory["state"];
     counter = JsonMemory["counter"];
-    flow = JsonMemory["flow"].as<String>();
+    strcpy(flow, JsonMemory["flow"].as<const char*>()); // How we write to flow as it is a static array of characters (avoid string data type due to dyanmic memory allocation trouble)
     ORM = JsonMemory["ORM"];
     
-    JsonMemory.clear();
-    
+    JsonMemory.clear(); // Sure like to clear that document
 }
 
 //-------------------------------------------------------------------------------------------------------------------//
@@ -308,7 +315,6 @@ void WriteOutUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
   // We write our variables into memory allocated to the StaticJsonDocument where it will be stored.
   // Check declaration in top of code for explanation about the variables
 
-
   // Read updated variables which has been updated by the SensorDataRead() (updating INPUTS before StateMachine())
     JsonMemory["start"] = start;
     JsonMemory["stop1"] = stop1;
@@ -326,8 +332,8 @@ void WriteOutUpdatedVariables(){ // Step 1 (figure 9. thesis document v1.0)
     JsonMemory["counter"] = counter;
     JsonMemory["flow"] = flow;
     JsonMemory["ORM"] = ORM;   
-    JsonMemory["TIS"] = TISJSON; //Kept track on only in Arduino // Meaning is only declared/updated/changed in the  Arduino (Control Layer)
-    JsonMemory["TR"] = TRJSON; //Kept track on only in Arduino // Meaning is only declared/updated/changed in the Arduino (Control Layer)
+    JsonMemory["TIS"] = TISJSON; 
+    JsonMemory["TR"] = TRJSON; 
 }
 
 //----------------------------------------------------------
@@ -336,14 +342,11 @@ void SensorLogicDataWrite() { // Step 2 (figure 9. thesis document v1.0)
   // Sensor & Logic data write - Send data from Control Layer (aka here from Arduino) to the HMI Layer (aka Node-RED)
   
     JsonMemory["flow"] = "SLDW"; // Identification property in our JSON data // used with figure 9. from thesis document v1.0.    
-    jsonstring = ""; // clear jsonstring
     
     serializeJson(JsonMemory, jsonstring); // Function that converts JSON object to a string.
     JsonMemory.clear();
     Serial.println(jsonstring); // Function that prints text to the Serial Monitor.
-    Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
-    jsonstring = "";
-    
+    Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.    
 }
 
 //----------------------------------------------------------
@@ -352,17 +355,15 @@ void RequestLogicForceFreezeRead(boolean RequestOrderLogic) { // Allow step 4 to
   // Request sent to HMI Layer (Node-RED) as LogicForceFreezeRead JSON
     SerialReady = RequestOrderLogic; // Ready to listen to serial line and read out "LogicForceFreezeRead". Due to size, it must be done directly and we can not "store" it in Serial Buffer (at least for UNO)...
 
-    JsonSerialReady.clear(); // Clear data stored in JsonSerialReady
+    JsonSerialReady.clear(); // Clear data stored in JsonSerialReady (make sure it is "empty"
     JsonSerialReady["flow"] = "RLFFR"; // Identification property of flow
     JsonSerialReady["SerialReady"] = SerialReady; // Signalling to Node-RED that we are ready to read serial data from it.
+        
+    serializeJson(JsonSerialReady, jsonstring); // Function that converts JSON object to a chracter string.
+    JsonSerialReady.clear(); //Clear jsondocument ready for next use
     
-    jsonstring = ""; // clear jsonstring
-    
-    serializeJson(JsonSerialReady, jsonstring); // Function that converts JSON object to a string.
-    JsonSerialReady.clear();
     Serial.println(jsonstring); // Function that prints text to the Serial Monitor.
     Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
-    jsonstring = "";
 }
 
 //----------------------------------------------------------
@@ -372,57 +373,49 @@ void LogicForceFreezeRead() { // Step 4 (figure 9. thesis document v1.0)
   // - but update our variables from the user interface inputs.
    
   // Listen to serial port and read out JSON data from HMI Layer
-    jsonstring = ""; // clear jsonstring
-    SerialWait = millis(); // set it to current time used to track time since we began listening for data from HMI layer (Node-RED) at serial port
+  SerialWait = millis(); // set it to current time used to track time since we began listening for data from HMI layer (Node-RED) at serial port
     
-    while ((Serial.available() == 0) and (millis() - SerialWait < SerialTimeOut)) {
+  while ((Serial.available() == 0) and (millis() - SerialWait < SerialTimeOut)) {
     // Do nothing; just wait for data
-    Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
-    delay(10); // Just to keep it from going bananas
-    }
-
-    delay(250); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
-    
-    while (Serial.available() > 0) {
-      c = (char)Serial.read(); // Read one character from the serial buffer
-      jsonstring += c;
+    Serial.flush(); // Ensures all data in tx buffer is sent before continuing program execution.
+    delay(10); // Just to keep the while loop from going bananas
   }
+  
+  delay(250); // This can be adjusted as wished but for a baud rate of 38400 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
 
-    //delay(500); // I am very paranoid regarding reading serial data in Arduino so don't be mad at me for having excessive amount of delays...
-    
+  uint8_t k = 0;
+  while (Serial.available() > 0) {
+    c = (char)Serial.read(); // Read one character from the serial buffer
+    jsonstring[k] = c;
+    k = k + 1 ; 
+  }
+  jsonstring[k] = '\0'; // Terminate character string that has been recieved so Serial.print know what to transmitt on serial line
+      
   if (jsonstring.length() > 0) {
 
     DeserializationError error = deserializeJson(JsonMemory, jsonstring); 
     
     if (error == DeserializationError::Ok){ // Used to check for errors when deserializing the jsonstring which just has been read from serial line
-      jsonstringLastValid_LFFR = jsonstring; // Store the jsonstring we read out, it contain good data.
-      jsonstring = "";
-    } else {
-      
-      String TempStr = ("DeserializationError in LogicForceFreezeRead: "); // Local variable, declared directly...
-      TempStr.concat(error.c_str()); // Appending error message to TempStr
-      Serial.println(TempStr);  
-      
-      deserializeJson(JsonMemory, jsonstringLastValid_LFFR); // This function clear JsonMemory and fill it with last valid data we received from the HMI Layer.
-      jsonstringLastValid_LFFR = "";
+      std::copy(jsonstring, jsonstring + sizeof(jsonstring), jsonstringLastValid_LFFR);  // Store the jsonstring we read out, it contain good data. Note, include null terminator \0
+    } else {  
+        Serial.printf("DeserializationError in LogicForceFreezeRead: %s\n", error.c_str()); 
+        
+        deserializeJson(JsonMemory, jsonstringLastValid_LFFR); // This function clear JsonMemory and fill it with last valid data we received from the HMI Layer.
       }
   } else {
       Serial.println("No data recieved from HMI Layer in LogicForceFreezeRead"); // Just for easy debugging in HMI Layer (node-red)
     }
-  jsonstring = "";
 }
    
 //----------------------------------------------------------
 
 void ActuatorWrite() {
-      JsonMemory["flow"] = "AW";  // Identification property // set by input to function.
-      jsonstring = ""; // clear jsonstring in case something already is on it.
-      
-      serializeJson(JsonMemory, jsonstring); // JsonMemory set in LogicForceFreezeRead()
-      JsonMemory.clear();
-      Serial.println(jsonstring);
-      Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
-      jsonstring = "";
+  JsonMemory["flow"] = "AW";  // Identification property // set by input to function.
+  
+  serializeJson(JsonMemory, jsonstring); // JsonMemory set in LogicForceFreezeRead()
+  JsonMemory.clear();
+  Serial.println(jsonstring);
+  Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
 }
 
 //----------------------------------------------------------
@@ -433,60 +426,51 @@ void RequestSensorDataRead(boolean RequestOrderSensor) { // Allow step 4 to begi
     JsonSerialReady.clear(); // Clear data stored in JsonSerialReady
     JsonSerialReady["flow"] = "RSDR"; // Identification property of flow
     JsonSerialReady["SerialReady"] = SerialReady; // Signalling to Node-RED that we are ready to read serial data from it.
-    
-    jsonstring = ""; // clear jsonstring
-    
+       
     serializeJson(JsonSerialReady, jsonstring); // Function that converts JSON object to a string.
     JsonSerialReady.clear();
     Serial.println(jsonstring); // Function that prints text to the Serial Monitor.
     Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
-    jsonstring = "";
-
 }
 //----------------------------------------------------------
 
 void SensorDataRead(){ // Step 8 (figure 9. thesis document v1.0)
   // Step 8 - Sensor data read - Send data from Process Layer to Control Layer (aka here). 
-
+  
   // Listen to serial port and read out JSON data from Process Layer
-    jsonstring = ""; // clear jsonstring
     SerialWait = millis(); // set it to current time used to track time since we began listening for data from HMI layer (Node-RED) at serial port
     
-    while ((Serial.available() == 0) and (millis() - SerialWait < SerialTimeOut)) {
-    // Do nothing; just wait for data
-      Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
-      delay(10); // Just to keep it from going bananas
-    }
-
-    delay(250); // This can be adjusted as wished but for a baud rate of 9600 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
-    
-    while (Serial.available() > 0) {
-      c = (char)Serial.read(); // Read one character from the serial buffer
-      jsonstring += c;
+  while ((Serial.available() == 0) and (millis() - SerialWait < SerialTimeOut)) {
+  // Do nothing; just wait for data
+    Serial.flush(); // Ensures all data in buffer is sent before continuing program execution.
+    delay(10); // Just to keep it from going bananas
   }
 
-    // Check if any data was received
-    if (jsonstring.length() > 0) {
-
-      DeserializationError error = deserializeJson(JsonMemory, jsonstring); 
-    
-      if ((error == DeserializationError::Ok)){ // Used to check for errors when deserializing the jsonstring which just has been read from serial line
-        jsonstringLastValid_SDR = jsonstring; // Store the jsonstring we read out, it contain good data.
-        jsonstring = "";
-        
-      } else {
-        
-          String TempStr = ("DeserializationError in SensorDataRead: "); // Local variable, declared directly... 
-          TempStr.concat(error.c_str()); // Appending error message to TempStr
-          Serial.println(TempStr);
+  delay(250); // This can be adjusted as wished but for a baud rate of 38400 I found this delay was long enough to fill up the whole serial receive buffer before reading it.
   
-          deserializeJson(JsonMemory, jsonstringLastValid_SDR); // This function clear JsonMemory and fill it with last valid data we received from the Process Layer.          
-          jsonstringLastValid_SDR = "";
-        }
+  k = 0;
+  while (Serial.available() > 0) {
+    c = (char)Serial.read(); // Read one character from the serial buffer
+    jsonstring[k] = c;
+    k = k + 1 ; 
+  }
+  jsonstring[k] = '\0'; // Terminate character string that has been recieved so Serial.print know what to transmitt on serial line
+      
+  // Check if any data was received
+  if (jsonstring.length() > 0) {
+
+    DeserializationError error = deserializeJson(JsonMemory, jsonstring); 
+  
+    if ((error == DeserializationError::Ok)){ // Used to check for errors when deserializing the jsonstring which just has been read from serial line
+      std::copy(jsonstring, jsonstring + sizeof(jsonstring), jsonstringLastValid_SDR);  // Store the jsonstring we read out, it contain good data. Note, include null terminator \0
+    } else {
+        Serial.printf("DeserializationError in SerialDataRead: %s\n", error.c_str()); 
+
+        deserializeJson(JsonMemory, jsonstringLastValid_SDR); // This function clear JsonMemory and fill it with last valid data we received from the Process Layer.          
+      }
   } else {
       Serial.println("No data recieved from HMI Layer in SensorDataRead"); // Just for easy debugging in HMI Layer (node-red)
     }
-  jsonstring = "";
 }
 
 //-------------------------------------------------------------------------------------------------------------------//
@@ -520,6 +504,6 @@ delay(20000);
 void setup(){ // The setup() function is executed only once, when the Arduino board is powered on or reset
     
 //Serial communication setup
-  Serial.begin(38400); // //9600 baud per seconds (bits per seconds)
+  Serial.begin(38400); // //38400 baud per seconds (bits per seconds)
   delay(10000); // Wait until serial commuication is up and running before "starting" program.
 }
