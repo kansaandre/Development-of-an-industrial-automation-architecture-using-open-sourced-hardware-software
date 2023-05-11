@@ -1,4 +1,6 @@
-// LAST UPDATE (roughly): 07.05.2023 13:28 // git username of last person that updated: kansaandre
+//v1.0 & i1.0 (See associated thesis document, version 1.0, iteration 1.0) // More info found in thesis document section "Document & Project - structure"
+
+// LAST UPDATE (roughly): 09.05.2023 23:30 // git username of last person that updated: kansaandre
 
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
@@ -483,7 +485,7 @@ void loop(){
     RequestSensorDataRead(true); // Allow step 8 (SensorDataRead();) to begin by sending request of data to the Process Layer (aka Node-RED for v1.0) // set "gate" function node to true for allowed passage    
       SensorDataRead(); // Step 8 // Return sensor value which are updated by the simulated process hosted in a function node in node-RED (as of v1.0). 
     RequestSensorDataRead(false); // Stop step 8 from sending data without request from the Process Layer to the Control Layer (aka Arduino) // set "gate" function node to false for blockage
-    delay(25000);
+    delay(0);
 }
 
 //-------------------------------------------------------------------------------------------------------------------//

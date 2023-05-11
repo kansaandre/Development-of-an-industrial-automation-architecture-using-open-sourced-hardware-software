@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "dgraph-js": "^21.3.1"
+  }
+}
