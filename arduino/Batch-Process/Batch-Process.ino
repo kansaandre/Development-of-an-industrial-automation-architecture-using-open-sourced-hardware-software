@@ -1,6 +1,6 @@
 //v1.0 & i1.0 (See associated thesis document, version 1.0, iteration 1.0) // More info found in thesis document section "Document & Project - structure"
 
-// LAST UPDATE (roughly): 09.05.2023 23:30 // git username of last person that updated: kansaandre
+// LAST UPDATE (roughly): 14.05.2023 23:39 // git username of last person that updated: kansaandre
 
 // Control Layer of "Development of an industrial automation architecture" --> GITHUB https://bit.ly/3TAT78J
 
@@ -198,7 +198,8 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
 //----------   
     case ready: // The step instructions 
 
-      vC = false; 
+      vC = false;
+      counter = 0; 
     
       if ((start == true) && (stop2 == false)) { // Condition to change state (the transition) 
         SetTimeInSequence = millis(); // Set equal to time we "started" our sequence
@@ -280,7 +281,7 @@ void StateMachine(){ // Main function for executing process logic sequence // Co
     
       stirr = false; // Stop stirrer
      
-      if ((stop2) && ((s1) || (counter == 10 || stop1))) { // Condition to change state (the transition)
+      if ((stop2) || ((s1 && (counter == 10)) || (stop1))) { // Condition to change state (the transition)
         state = ready; // Stop loop and return to ready state given conditions above are met
         PreviouslyVisited = false; //reset the PreviouslyVisited variable when transition is met
       } else if (s1 && counter < 10 && !stop1 && !stop2) {
